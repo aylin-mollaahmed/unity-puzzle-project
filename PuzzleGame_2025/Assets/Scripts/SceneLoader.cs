@@ -1,6 +1,10 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class SceneLoader
+public class SceneLoader : MonoBehaviour
 {
-    
+    public void LoadGameScene()
+    {
+        SceneManager.LoadScene("Game");
+    }
 }
