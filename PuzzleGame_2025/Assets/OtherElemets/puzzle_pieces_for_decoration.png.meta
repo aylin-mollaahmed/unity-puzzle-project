@@ -1,0 +1,468 @@
+fileFormatVersion: 2
+guid: 7d79e8c9befebab42a94b818ce114ec9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -986417806215445274
+    second: puzzle_pieces_for_decoration_0
+  - first:
+      213: -5593787546163512787
+    second: puzzle_pieces_for_decoration_1
+  - first:
+      213: 1477400812931243961
+    second: puzzle_pieces_for_decoration_2
+  - first:
+      213: -7096871922507316636
+    second: puzzle_pieces_for_decoration_3
+  - first:
+      213: 319340443162812305
+    second: puzzle_pieces_for_decoration_4
+  - first:
+      213: -3133009249618436284
+    second: puzzle_pieces_for_decoration_5
+  - first:
+      213: 5399158050227075651
+    second: puzzle_pieces_for_decoration_6
+  - first:
+      213: -764591742236864518
+    second: puzzle_pieces_for_decoration_7
+  - first:
+      213: 5009943740128256
+    second: puzzle_pieces_for_decoration_8
+  - first:
+      213: -4371595742034949021
+    second: puzzle_pieces_for_decoration_9
+  - first:
+      213: 3251153171406642719
+    second: puzzle_pieces_for_decoration_10
+  - first:
+      213: 1579711238728491453
+    second: puzzle_pieces_for_decoration_11
+  - first:
+      213: -5804590021928314357
+    second: puzzle_pieces_for_decoration_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_0
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 639
+        width: 302
+        height: 302
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 16, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e488644b3a8f42f0800000000000000
+      internalID: -986417806215445274
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_1
+      rect:
+        serializedVersion: 2
+        x: 311
+        y: 883
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2a7be92ddfde52b0800000000000000
+      internalID: -5593787546163512787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_2
+      rect:
+        serializedVersion: 2
+        x: 462
+        y: 655
+        width: 242
+        height: 321
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9bfd3a53638c08410800000000000000
+      internalID: 1477400812931243961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_3
+      rect:
+        serializedVersion: 2
+        x: 748
+        y: 675
+        width: 338
+        height: 289
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 462028a5698d28d90800000000000000
+      internalID: -7096871922507316636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_4
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 647
+        width: 290
+        height: 310
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19f922de0768e6400800000000000000
+      internalID: 319340443162812305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_5
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 117
+        width: 249
+        height: 197
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44fda76dfa05584d0800000000000000
+      internalID: -3133009249618436284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_6
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 386
+        width: 269
+        height: 215
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34ab9f504a9adea40800000000000000
+      internalID: 5399158050227075651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_7
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 361
+        width: 279
+        height: 243
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aff46c58cdf9365f0800000000000000
+      internalID: -764591742236864518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_8
+      rect:
+        serializedVersion: 2
+        x: 465
+        y: 75
+        width: 236
+        height: 283
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00c99fc648cc11000800000000000000
+      internalID: 5009943740128256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_9
+      rect:
+        serializedVersion: 2
+        x: 791
+        y: 329
+        width: 257
+        height: 291
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36c856695d8f453c0800000000000000
+      internalID: -4371595742034949021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_10
+      rect:
+        serializedVersion: 2
+        x: 799
+        y: 95
+        width: 279
+        height: 231
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1ed314859a6e1d20800000000000000
+      internalID: 3251153171406642719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_11
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 397
+        width: 338
+        height: 221
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db1aa1080034ce510800000000000000
+      internalID: 1579711238728491453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: puzzle_pieces_for_decoration_12
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 91
+        width: 294
+        height: 262
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0a9f2c0124f17fa0800000000000000
+      internalID: -5804590021928314357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 29adad09e70c2b840afdd764e8e3afdf
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      puzzle_pieces_for_decoration_0: -986417806215445274
+      puzzle_pieces_for_decoration_1: -5593787546163512787
+      puzzle_pieces_for_decoration_10: 3251153171406642719
+      puzzle_pieces_for_decoration_11: 1579711238728491453
+      puzzle_pieces_for_decoration_12: -5804590021928314357
+      puzzle_pieces_for_decoration_2: 1477400812931243961
+      puzzle_pieces_for_decoration_3: -7096871922507316636
+      puzzle_pieces_for_decoration_4: 319340443162812305
+      puzzle_pieces_for_decoration_5: -3133009249618436284
+      puzzle_pieces_for_decoration_6: 5399158050227075651
+      puzzle_pieces_for_decoration_7: -764591742236864518
+      puzzle_pieces_for_decoration_8: 5009943740128256
+      puzzle_pieces_for_decoration_9: -4371595742034949021
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
