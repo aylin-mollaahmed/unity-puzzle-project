@@ -1,0 +1,147 @@
+using System.IO;
+using System.Xml;
+using UnityEngine;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
+
+public class XmlUserRepository
+{
+    //Като член-данна ще пазя пълния път до файла
+    private string filePath;
+
+    //Конструктор
+    public XmlUserRepository(string fileName = "users.xml")
+    {
+        //Сглобява правилен път от папката за записване да файлове, които да не се трият след рестарт и името на файла
+        //C:\Users\Aylin\AppData\LocalLow\CompanyName\ProductName\users.xml
+
+        filePath = Path.Combine(Application.persistentDataPath, fileName);
+
+        //Подсигуряваме, че такъв файл съществува
+        CreateFileIfItDoesntExist();
+       
+
+    }
+
+    private void CreateFileIfItDoesntExist()
+    {
+        //Проверявам дали има вече файл
+        if (File.Exists(filePath))
+        {
+            return;
+        }
+
+        //Създавам ново DOM дърво, празно
+        var doc = new XmlDocument();
+
+        //Създавам декларация, с която ще започва моя файл
+        //<?xml version="1.0" encoding="utf-8"?>
+      
+        var declaration = doc.CreateXmlDeclaration("1.0", "utf-8", null);
+        
+        //Добавяме декларацията към дървото, но тя не е Node
+        doc.AppendChild(declaration);
+
+        //Създаваме корена на дървото, може да имаме само един корен и го добавяме към дървото
+        var root = doc.CreateElement("Users");
+        doc.AppendChild(root);
+
+        //Запазваме дървото във xml файл
+        doc.Save(filePath);
+
+        //Файлът ще бъде празен ияе изглежда така
+        //<?xml version="1.0" encoding="utf-8"?>
+        //< Users />
+
+    }
+
+    //Функция, която зарежда документа от диска в паметта
+    private XmlDocument LoadDoc()
+    {
+        var doc = new XmlDocument();
+        doc.Load(filePath);
+        return doc;
+    }
+
+    // Проверка дали този потребител вече съществува
+    public bool UserExists(string username)
+    {
+       
+        if (username == null || username.Length == 0)
+        {
+            return false;
+        }
+
+        var doc = LoadDoc();
+
+       
+        // Използвам XPath израз за намиране на елемент с атрибут username равен на подадения username
+        var node = doc.SelectSingleNode($"/Users/User[@username=\"{username}\")]");
+
+        //Ако намери такъв възел връща true, ако не - връща false
+        if (node == null ){
+
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    //Функция, която проверява дали има такъв потрбител с такава парола
+    public bool ValidateLogin(string username, string password)
+    {
+        
+        var doc = LoadDoc();
+
+        var node = doc.SelectSingleNode(
+            $"/Users/User[@username=\"{username}\"][@password=\"{password}\"]"
+        );
+
+        if (node == null)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    //Функция за регистрация на потребител
+    public bool TryRegister(string username, string password, ref string message)
+    {
+        
+
+        if (username == null || password == null || username.Length == 0 || password.Length == 0)
+        {
+            message = "Моля, въведи потребителско име и парола.";
+            return false;
+        }
+
+        var doc = LoadDoc();
+        //Проверявам има ли вече такъв потребител
+        var existingUser = doc.SelectSingleNode($"/Users/User[@username=\"{username}\"]");
+        if (existingUser != null)
+        {
+            message = "Такъв потребител вече съществува.";
+            return false;
+        }
+
+        //Създавам нов елемент
+        var user = doc.CreateElement("User");
+
+        //Слагам му съответните атрибути
+        user.SetAttribute("username", username);
+        user.SetAttribute("password", password);
+
+        //Добавям го като следващо дете на корена
+        doc.DocumentElement.AppendChild(user);
+        doc.Save(filePath);
+
+        message = "Успешна регистрация! Моля върнете се към към страницата за вход!";
+        return true;
+    }
+
+   
+}
