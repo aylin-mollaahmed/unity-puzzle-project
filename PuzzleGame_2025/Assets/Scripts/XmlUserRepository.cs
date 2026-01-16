@@ -1,7 +1,7 @@
+
 using System.IO;
 using System.Xml;
 using UnityEngine;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class XmlUserRepository
 {
@@ -75,7 +75,7 @@ public class XmlUserRepository
 
        
         // Използвам XPath израз за намиране на елемент с атрибут username равен на подадения username
-        var node = doc.SelectSingleNode($"/Users/User[@username=\"{username}\")]");
+        var node = doc.SelectSingleNode($"/Users/User[@username=\"{username}\"]");
 
         //Ако намери такъв възел връща true, ако не - връща false
         if (node == null ){
@@ -135,12 +135,72 @@ public class XmlUserRepository
         user.SetAttribute("username", username);
         user.SetAttribute("password", password);
 
+        var statistic_node = doc.CreateElement("Stats");
+        statistic_node.SetAttribute("totalPoints", "0");
+
+        user.AppendChild(statistic_node);
+
+        var progress_node = doc.CreateElement("Progress");
+
+        var picture_progress_1 = doc.CreateElement("PictureProgress");
+        picture_progress_1.SetAttribute("pictureId", "prehistoric");
+        picture_progress_1.SetAttribute("unlockedUpTo", "1");
+        progress_node.AppendChild(picture_progress_1);
+
+        var picture_progress_2 = doc.CreateElement("PictureProgress");
+        picture_progress_2.SetAttribute("pictureId", "egypt");
+        picture_progress_2.SetAttribute("unlockedUpTo", "1");
+        progress_node.AppendChild(picture_progress_2);
+
+        var picture_progress_3 = doc.CreateElement("PictureProgress");
+        picture_progress_3.SetAttribute("pictureId", "knights");
+        picture_progress_3.SetAttribute("unlockedUpTo", "1");
+        progress_node.AppendChild(picture_progress_3);
+
+        var picture_progress_4 = doc.CreateElement("PictureProgress");
+        picture_progress_4.SetAttribute("pictureId", "future");
+        picture_progress_4.SetAttribute("unlockedUpTo", "1");
+        progress_node.AppendChild(picture_progress_4);
+
+        user.AppendChild(progress_node);
+
         //Добавям го като следващо дете на корена
         doc.DocumentElement.AppendChild(user);
         doc.Save(filePath);
 
         message = "Успешна регистрация! Моля върнете се към към страницата за вход!";
         return true;
+    }
+
+    public UserInfoClass LoadUserInfo(string username)
+    {
+        if(username == null || username.Length == 0)
+        {
+            return null;
+        }
+
+        var doc = LoadDoc();
+        var node = doc.SelectSingleNode(
+            $"/Users/User[@username=\"{username}\"]"
+        );
+
+
+        UserInfoClass user = new UserInfoClass();
+        user.username = username;
+        
+
+        var statsNode = node.SelectSingleNode("Stats");
+        user.totalPoints = statsNode.Attributes[0].Value;
+
+        var progressNode = node.SelectSingleNode("Progress");
+        foreach(XmlNode picture in progressNode.SelectNodes("PictureProgress"))
+        {
+            string pictureId = picture.Attributes[0].Value;
+            string unlockedUpTo = picture.Attributes[1].Value;
+            user.unlockedUpTo[pictureId]= unlockedUpTo;
+        }
+        
+        return user;
     }
 
    

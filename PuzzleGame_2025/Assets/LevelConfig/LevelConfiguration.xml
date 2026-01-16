@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameConfig>
+  <Difficulties>
+    <Difficulty id="1" pieceShape="Rect" randomOrientation="false" shortSidePieces="3" />
+    <Difficulty id="2" pieceShape="Rect" randomOrientation="true"  shortSidePieces="3" />
+    <Difficulty id="3" pieceShape="Irregular" randomOrientation="false" shortSidePieces="3" />
+    <Difficulty id="4" pieceShape="Irregular" randomOrientation="true" shortSidePieces="3" />
+  </Difficulties>
+</GameConfig>

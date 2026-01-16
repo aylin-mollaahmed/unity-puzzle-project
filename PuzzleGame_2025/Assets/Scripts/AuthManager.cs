@@ -44,7 +44,7 @@ public class AuthManager : MonoBehaviour
 
     public void OnLoginClicked()
     {
-     
+      
         if (loginUsername.text.Length == 0 || loginPassword.text.Length == 0)
         {
             SetMessage("Моля, въведи име и парола.");
@@ -54,6 +54,8 @@ public class AuthManager : MonoBehaviour
         if (repo.ValidateLogin(loginUsername.text, loginPassword.text))
         {
             SetMessage("Успешен вход!");
+            UserInfoClass currentUser = repo.LoadUserInfo(loginUsername.text);
+            UserAndGameDetailsManager.Instance.SetUser(currentUser);
             SceneManager.LoadScene("HomePage");
         }
         else
