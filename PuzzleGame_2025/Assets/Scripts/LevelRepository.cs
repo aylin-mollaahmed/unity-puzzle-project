@@ -25,6 +25,30 @@ public class LevelRepository
         config.randomOrientation = bool.Parse(node.Attributes["randomOrientation"].Value);
         config.piecesCount = int.Parse(node.Attributes["shortSidePieces"].Value);
 
+        // ---- Help config ----
+        var helpNode = node.SelectSingleNode("Help") as XmlElement;
+
+        var helpConfig = new HelpConfig();
+
+        if (helpNode != null)
+        {
+            helpConfig.enabled = bool.Parse(helpNode.GetAttribute("enabled"));
+            helpConfig.maxUses = int.Parse(helpNode.GetAttribute("maxUses"));
+            helpConfig.mergeCount = int.Parse(helpNode.GetAttribute("mergeCount"));
+            helpConfig.costPoints = int.Parse(helpNode.GetAttribute("costPoints"));
+        }
+        else
+        {
+            // Default ако няма Help в XML
+            helpConfig.enabled = false;
+            helpConfig.maxUses = 0;
+            helpConfig.mergeCount = 2;
+            helpConfig.costPoints = 0;
+        }
+
+        config.help = helpConfig;
+
         return config;
     }
+
 }

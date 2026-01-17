@@ -202,6 +202,18 @@ public class XmlUserRepository
         
         return user;
     }
+    public void AddPoints(string username, int newPoints)
+    {
+        var doc = LoadDoc();
+        var node = doc.SelectSingleNode(
+            $"/Users/User[@username=\"{username}\"]"
+        ) as XmlElement;
+       
+        var statsNode = node.SelectSingleNode("Stats") as XmlElement;
+        statsNode.SetAttribute("totalPoints", newPoints.ToString());
+        doc.Save(filePath);
+
+    }
 
    
 }
