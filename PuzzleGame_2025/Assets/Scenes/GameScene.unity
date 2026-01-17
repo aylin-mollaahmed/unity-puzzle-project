@@ -1805,7 +1805,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1561826720
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2164,7 +2164,7 @@ MonoBehaviour:
   Progress: {fileID: 493456167}
   gameHolder: {fileID: 544531886}
   piecePrefab: {fileID: 5007773508221021893, guid: b3cded4bf9fa40b4b98b286b9500d0f3, type: 3}
-  helpButton: {fileID: 0}
+  helpButton: {fileID: 795008670}
   finalPanel: {fileID: 1561826719}
   finalText: {fileID: 73612917}
   playAgainButton: {fileID: 56486976}

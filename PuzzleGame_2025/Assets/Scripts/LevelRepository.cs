@@ -34,7 +34,6 @@ public class LevelRepository
         {
             helpConfig.enabled = bool.Parse(helpNode.GetAttribute("enabled"));
             helpConfig.maxUses = int.Parse(helpNode.GetAttribute("maxUses"));
-            helpConfig.mergeCount = int.Parse(helpNode.GetAttribute("mergeCount"));
             helpConfig.costPoints = int.Parse(helpNode.GetAttribute("costPoints"));
         }
         else
@@ -42,7 +41,6 @@ public class LevelRepository
             // Default ако няма Help в XML
             helpConfig.enabled = false;
             helpConfig.maxUses = 0;
-            helpConfig.mergeCount = 2;
             helpConfig.costPoints = 0;
         }
 
