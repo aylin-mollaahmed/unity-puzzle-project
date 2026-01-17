@@ -1,20 +1,17 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class ImageHoverClick : MonoBehaviour,
+public class ImageHoverSelect : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
-    public static ImageHoverClick selectedImage;
+    public static ImageHoverSelect selectedImage;
 
-    [Header("Scales")]
+    [Header("Scale")]
     public float hoverScale = 1.1f;
     public float selectedScale = 1.2f;
 
-    [Header("Speed")]
-    public float speed = 12f;
-
-    [Header("Panel Offset")]
-    [SerializeField] private float panelOffsetY = 60f;
+    [Header("Smooth speed")]
+    public float speed = 10f;
 
     private Vector3 normalScale;
     private Vector3 targetScale;
@@ -49,10 +46,10 @@ public class ImageHoverClick : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        SelectThisImage();
+        SelectThis();
     }
 
-    void SelectThisImage()
+    private void SelectThis()
     {
         if (selectedImage != null && selectedImage != this)
             selectedImage.Deselect();
@@ -60,16 +57,11 @@ public class ImageHoverClick : MonoBehaviour,
         selectedImage = this;
         isSelected = true;
         targetScale = normalScale * selectedScale;
-
-        if (LevelPanelController.Instance != null)
-            LevelPanelController.Instance.ShowLevels();
     }
 
-    public void Deselect()
+    private void Deselect()
     {
         isSelected = false;
         targetScale = normalScale;
     }
 }
-
-
