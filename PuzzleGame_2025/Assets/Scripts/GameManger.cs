@@ -85,10 +85,9 @@ public class GameManger : MonoBehaviour
 
         rep = new LevelRepository(levelConfigXml);
 
-        //Да се смени като се върже сцена 2
-        // currentLevel = rep.GetConfigByDifficulty(UserAndGameDetailsManager.Instance.CurrentGame.difficulty);
-        int demoDi = 2;
-        currentLevel = rep.GetConfigByDifficulty(demoDi);
+        
+        currentLevel = rep.GetConfigByDifficulty(UserAndGameDetailsManager.Instance.CurrentGame.difficulty);
+       
 
         pieces = new List<Transform>();
         dimensions = Vector2Int.zero;
@@ -109,8 +108,8 @@ public class GameManger : MonoBehaviour
 
         //Номер на нивото
         //Да се смени като се върже сцена 2
-        // title.text = "Level " + UserAndGameDetailsManager.Instance.CurrentGame.difficulty;
-        title.text = "Level " + demoDi;
+        title.text = "Level " + UserAndGameDetailsManager.Instance.CurrentGame.difficulty;
+      
 
         //Брой изкарани точки
         CorrectToShow.text = "Points: " + scorePoints;
@@ -131,13 +130,13 @@ public class GameManger : MonoBehaviour
             case "Rect":
                 //Брой редове и колони
                 //Да се смени като се върже сцена 2
-                //dimensions = GetDimensions(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId].texture, currentLevel.piecesCount);
-                dimensions = GetDimensions(puzzleImages[1].texture, currentLevel.piecesCount);
+                dimensions = GetDimensions(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture, currentLevel.piecesCount);
+                
 
                 //Създаване на пъзела
                 //Да се смени като се върже сцена 2
-                //CreateJigsawPieces(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId].texture);
-                CreateJigsawPieces(puzzleImages[1].texture);
+                CreateJigsawPieces(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture);
+                
 
                 //Инициализираме групите, тоест всяко парче да е група
                 InitGroups();
@@ -526,9 +525,11 @@ public class GameManger : MonoBehaviour
                 //Актуализираме броя точки
                 timerRunning = false;
                 var repo = new XmlUserRepository();
-                //Да се смени като се върже сцена 2
-                //repo.AddPoints(UserAndGameDetailsManager.Instance.CurrentUser.username, scorePoints + int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.totalPoints));
-                repo.AddPoints("test", scorePoints);
+                
+                int totalPoints = scorePoints + int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.totalPoints);
+                repo.AddPoints(UserAndGameDetailsManager.Instance.CurrentUser.username, totalPoints);
+                UserAndGameDetailsManager.Instance.CurrentUser.totalPoints = totalPoints.ToString();
+                
                 ShowFinalPanel();
             }
         }
