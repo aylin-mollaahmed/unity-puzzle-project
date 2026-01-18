@@ -427,9 +427,12 @@ public class GameManger : MonoBehaviour
                 var repo = new XmlUserRepository();
 
                 int totalPoints = scorePoints + int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.totalPoints);
+                string pictureId = getPictureId(UserAndGameDetailsManager.Instance.CurrentGame.pictureId);
+                int unlockedUpToNew = UserAndGameDetailsManager.Instance.CurrentGame.difficulty + 1;
                 repo.AddPoints(UserAndGameDetailsManager.Instance.CurrentUser.username, totalPoints);
+                repo.updateLevelLocking(UserAndGameDetailsManager.Instance.CurrentUser.username, unlockedUpToNew, pictureId);
                 UserAndGameDetailsManager.Instance.CurrentUser.totalPoints = totalPoints.ToString();
-
+                UserAndGameDetailsManager.Instance.CurrentUser.unlockedUpTo[pictureId] = unlockedUpToNew.ToString();
                 ShowFinalPanel();
             }
         }
@@ -483,6 +486,18 @@ public class GameManger : MonoBehaviour
         }
     }
 
+    string getPictureId(int id)
+    {
+        switch (id)
+        {
+            case 1: return "prehistoric";
+            case 2: return "egypt";
+            case 3: return "knights";
+            case 4: return "future";
+
+        }
+        return null;
+    }
     //Timer UI
     private void UpdateTimerUI()
     {

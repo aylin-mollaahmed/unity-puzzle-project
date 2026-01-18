@@ -214,6 +214,17 @@ public class XmlUserRepository
         doc.Save(filePath);
 
     }
+    public void updateLevelLocking(string username, int unlockedUpToNew, string pictureId)
+    {
+        var doc = LoadDoc();
+       
+        var pictureProgress = doc.SelectSingleNode(
+            $"/Users/User[@username=\"{username}\"]/Progress/PictureProgress[@pictureId=\"{pictureId}\"]"
+               ) as XmlElement;
 
-   
+        pictureProgress.SetAttribute("unlockedUpTo", unlockedUpToNew.ToString());
+        doc.Save(filePath);
+
+    }
+
 }
