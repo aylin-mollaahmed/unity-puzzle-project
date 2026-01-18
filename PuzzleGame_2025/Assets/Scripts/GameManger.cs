@@ -1,8 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.U2D;
 using UnityEngine.UI;
+
 
 public class GameManger : MonoBehaviour
 {
@@ -18,20 +23,7 @@ public class GameManger : MonoBehaviour
     [SerializeField] private TMP_Text Timer;
     [SerializeField] private TMP_Text Progress;
     [SerializeField] private Transform gameHolder;
-
-    [Header("Rect Pieces Prefab (Level 1/2)")]
     [SerializeField] private Transform piecePrefab;
-
-    [Header("Irregular Pieces Prefab (Level 3/4)")]
-    [SerializeField] private Transform irregularPiecePrefab;
-
-    [Header("Irregular Generation Settings")]
-    [SerializeField] private int tileSizeLevel3 = 100;
-    [SerializeField] private int tileSizeLevel4 = 80;
-    [SerializeField] private int paddingPixels = 20;
-    [SerializeField] private float irregularPPU = 100f;
-    [SerializeField] private float irregularCellW = 1f;
-    [SerializeField] private float irregularCellH = 1f;
 
     [Header("Help UI")]
     [SerializeField] private Button helpButton;
@@ -41,23 +33,20 @@ public class GameManger : MonoBehaviour
     [SerializeField] private TMP_Text finalText;
     [SerializeField] private Button playAgainButton;
 
-    [Header("Snap Settings (Irregular Only)")]
-    [SerializeField] private float snapDistanceIrregular = 0.15f;
-
     //DOM дърво с конфигурации за нивата и правилата за помощ
     private LevelRepository rep;
     //Клас с извлечената конфигурационна информация за нивото
     private LevelConfig currentLevel;
 
-    //Лист от всички парчета
+    //Лист от всички парчета и по конкретно техните трансформации
     private List<Transform> pieces;
 
     //Колко реда и колко колони ще има пъзела
-    private Vector2Int dimensions;
+    Vector2Int dimensions;
 
-    //Размерите на всяко парче (само за Rect)
-    private float width;
-    private float height;
+    //Размерите на всяко парче
+    float width;
+    float height;
 
     //Текущото хваната парче или група от парчета, които ще влачим
     private Transform draggingPiece;
@@ -80,30 +69,33 @@ public class GameManger : MonoBehaviour
     // За всяка група кои парчета принадлежат към нея
     private Dictionary<Transform, List<Transform>> groupToPieces;
 
-    //Колко пъти е използван бутона help
+    //Колко пъти е използван бутона help, защото лимитираме колко пъти е позволено да се използва
     private int helpUsed;
 
-    //Точки
+    //Колко са точките, допълнителна променлива, с която да може да реализираме отменяне на точки при използване на помощ 
     private int scorePoints;
 
     //За всяко парче, коректната му позиция спрямо рамката
     private Vector3[] correctLocalPos;
 
-    private bool IsIrregularLevel() => currentLevel != null && currentLevel.pieceShape == "Irregular";
-
     private void Awake()
     {
+        //Инициализация на член-данните
+
         rep = new LevelRepository(levelConfigXml);
+
+
         currentLevel = rep.GetConfigByDifficulty(UserAndGameDetailsManager.Instance.CurrentGame.difficulty);
+
 
         pieces = new List<Transform>();
         dimensions = Vector2Int.zero;
         width = 0f;
         height = 0f;
         draggingPiece = null;
-        offset = Vector3.zero;
+        offset = Vector3Int.zero;
         piecesCorrect = 0;
-        currentTime = 0f;
+        currentTime = 0;
         timerRunning = true;
         pieceToGroup = new Dictionary<Transform, Transform>();
         groupToPieces = new Dictionary<Transform, List<Transform>>();
@@ -111,73 +103,55 @@ public class GameManger : MonoBehaviour
         scorePoints = 0;
         correctLocalPos = null;
 
+        //Банер
+
+        //Номер на нивото
+        //Да се смени като се върже сцена 2
         title.text = "Level " + UserAndGameDetailsManager.Instance.CurrentGame.difficulty;
+
+
+        //Брой изкарани точки
         CorrectToShow.text = "Points: " + scorePoints;
 
+        //Време
         UpdateTimerUI();
-        UpdateProgressUI();
-    }
 
+        //Прогрес
+        UpdateProgressUI();
+
+
+    }
     private void Start()
     {
-        // Генериране на парчетата според типа
+
         switch (currentLevel.pieceShape)
         {
             case "Rect":
-                {
-                    Texture2D tex = puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture;
+                //Брой редове и колони
+                //Да се смени като се върже сцена 2
+                dimensions = GetDimensions(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture, currentLevel.piecesCount);
 
-                    dimensions = GetDimensions(tex, currentLevel.piecesCount);
-                    CreateJigsawPieces(tex);
 
-                    InitGroups();
-                    Scatter();
-                    UpdateBorder();
+                //Създаване на пъзела
+                //Да се смени като се върже сцена 2
+                CreateJigsawPieces(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture);
 
-                    piecesCorrect = 0;
-                    scorePoints = 0;
-                    CorrectToShow.text = "Points: " + scorePoints;
-                    UpdateProgressUI();
-                    break;
-                }
+
+                //Инициализираме групите, тоест всяко парче да е група
+                InitGroups();
+
+                //Разпръсване на групите, тоест на парчетата по екрана  и даване на произволна ориентация при нужда
+                Scatter();
+
+
+                UpdateBorder();
+                piecesCorrect = 0;
+                scorePoints = 0;
+                break;
 
             case "Irregular":
-                {
-                    Texture2D tex = puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture;
 
-                    int diff = UserAndGameDetailsManager.Instance.CurrentGame.difficulty;
-                    int tileSize = (diff == 4) ? tileSizeLevel4 : tileSizeLevel3;
-
-                    // Това ще напълни: pieces, correctLocalPos, dimensions
-                    IrregularPuzzleBuilder.Build(
-                        tex,
-                        irregularPiecePrefab,
-                        gameHolder,
-                        irregularCellW,
-                        irregularCellH,
-                        tileSize,
-                        paddingPixels,
-                        irregularPPU,
-                        out pieces,
-                        out correctLocalPos,
-                        out dimensions
-                    );
-
-                    // При irregular не ползваме width/height за snap, но Scatter/Border искат стойности
-                    // Настрой ги приблизително на база клетки (за да не хвърля NaN)
-                    width = irregularCellW;
-                    height = irregularCellH;
-
-                    InitGroups();
-                    Scatter();
-                    UpdateBorder(); // ще е правоъгълна рамка, ок е визуално
-
-                    piecesCorrect = 0;
-                    scorePoints = 0;
-                    CorrectToShow.text = "Points: " + scorePoints;
-                    UpdateProgressUI();
-                    break;
-                }
+                break;
 
             default:
                 Debug.LogError($"Unknown pieceShape: {currentLevel.pieceShape}");
@@ -186,108 +160,171 @@ public class GameManger : MonoBehaviour
     }
 
     //Помощна функция за нивата с правоъгълни парчета
-    private Vector2Int GetDimensions(Texture2D puzzleTexture, int pieceCount)
+    Vector2Int GetDimensions(Texture2D puzzleTexture, int pieceCount)
     {
-        Vector2Int d = Vector2Int.zero;
+        Vector2Int dimensions = Vector2Int.zero;
 
         if (puzzleTexture.width < puzzleTexture.height)
         {
-            d.x = pieceCount;
-            d.y = (pieceCount * puzzleTexture.height) / puzzleTexture.width;
+            dimensions.x = pieceCount;
+            dimensions.y = (pieceCount * puzzleTexture.height) / puzzleTexture.width;
         }
         else
         {
-            d.x = (pieceCount * puzzleTexture.width) / puzzleTexture.height;
-            d.y = pieceCount;
+            dimensions.x = (pieceCount * puzzleTexture.width) / puzzleTexture.height;
+            dimensions.y = pieceCount;
         }
-        return d;
+        return dimensions;
     }
 
-    //Функцията, която създава правоъгълните парчета (ниво 1/2) — НЕПИПАНА логика
-    private void CreateJigsawPieces(Texture2D jigsawTexture)
+    //Функцията, която създава квадратните парчета
+    void CreateJigsawPieces(Texture2D jigsawTexture)
     {
+        //Нормализираме данните като въвеждаме удобна мерна единица,за да избегнем работа в пиксели
+
+
+        //Изчисляваме височината на едно парче, като приемаме, че цялата височина е 1 
         height = 1f / dimensions.y;
 
+        //Пресмятаме какво е отношението на височината и широчината, тоест колко широка е цялата картина
         float aspect = (float)jigsawTexture.width / jigsawTexture.height;
+
+        //Получавам ширината на едно парче
         width = aspect / dimensions.x;
 
+        // Инициализираме вектора с правилните позиции на всяко парче, защото тук вече знаем колко ще са парчетата
         int total = dimensions.x * dimensions.y;
         correctLocalPos = new Vector3[total];
 
-        pieces.Clear();
 
+        //Създаваме всяко едно парче като минаваме колона по колона
         for (int row = 0; row < dimensions.y; row++)
         {
             for (int col = 0; col < dimensions.x; col++)
             {
+                // piecePrefab е шаблон за едно парче от пъзела
+                //Тук му казваме да направи копие на шаблона като дете на gameHolder
+                //GameHolder е празен обект, рамката на пъзела, но всички парчета са негови деца
+                //Идеята е позицията на парчетата да се измерва спрямо рамката
+                //Initiate връща tranform-a на парчето
                 Transform piece = Instantiate(piecePrefab, gameHolder);
 
-                piece.localPosition = new Vector3(
-                    (-width * dimensions.x / 2) + (width / 2) + (width * col),
-                    (-height * dimensions.y / 2) + (height / 2) + (height * row),
-                    -1f
-                );
 
+                // Локалната позиция, тоест позицията спрямо родителя
+
+                //За X координатата
+                // (-width * dimensions.x / 2) това пресмята координата на първото парче в лявевия ъгъл, така, че да сме разположили рамката симетрично спрямо (0,0)
+                // (width / 2) това премества с половим ширина на парче защото ни интересува къде е средата на парчето
+                // (width * col) това измества в зависимост от колоната на която се намираме в момента
+                // Същата логика и за Y координатата
+                // Идеята е да започнем от долния ляв ъгъл
+
+                piece.localPosition = new Vector3(
+                  (-width * dimensions.x / 2) + (width / 2) + (width * col),
+                  (-height * dimensions.y / 2) + (height / 2) + (height * row),
+                  -1);
+
+
+                // Размера на парчето 
+                // То е 3D обект, за това трябва да се подаде и някаква дълбочина, въпреки, че ние ще го третираме като 2D обект
                 piece.localScale = new Vector3(width, height, 1f);
 
+                //Индексиране по формула спрямо ред и колона
                 int index = (row * dimensions.x) + col;
+
+                //Запазвам на получения индекс правилната позиция на парчето, и казваме и на всяко парче кой е неговия уникален номер
                 correctLocalPos[index] = piece.localPosition;
                 piece.name = index.ToString();
 
+
+                //Добавяме парчето в масива от парчета
                 pieces.Add(piece);
 
+                // Ще използваме  UV координати, за да определим коя точно част от картинката да се покаже върху парчето
+                // При тези координати винаги се намираме между 0 и 1 и гледаме частите като колко процента от ширината и колко проценти от височината да покажа 
                 float width1 = 1f / dimensions.x;
                 float height1 = 1f / dimensions.y;
 
+
+                // Подредбата по тези координати изглежда така за всяко парче:
+                // V ↑
+                // 1 | (0, 1)--------(1, 1)
+                //   |    |              |
+
+                //   |    |              |
+                // 0 | (0, 0)--------(1, 0)
+                //        0           1 → U
+
+
+                //Инициализираме масив от такива координати, който съдържа координати на всеки ъгъл
                 Vector2[] uv = new Vector2[4];
                 uv[0] = new Vector2(width1 * col, height1 * row);
                 uv[1] = new Vector2(width1 * (col + 1), height1 * row);
                 uv[2] = new Vector2(width1 * col, height1 * (row + 1));
                 uv[3] = new Vector2(width1 * (col + 1), height1 * (row + 1));
 
+                //Mesh е формата на обекта, на нея присвояваме координатите на върховете, тоест указваме коя част от текстурата къде да отиде
                 Mesh mesh = piece.GetComponent<MeshFilter>().mesh;
                 mesh.uv = uv;
 
+                //Слага текстурата от съответната снимка като основна текстура
                 piece.GetComponent<MeshRenderer>().material.SetTexture("_MainTex", jigsawTexture);
             }
         }
     }
 
-    //Групи
+    //Функция, която дига нивото на абстракция като добавя групи, за да е възможно групирането на парчета
     private void InitGroups()
     {
-        // важно: ако презареждаш/сменяш ниво в бъдеще, тук трябва да чистиш старите GroupRoot-ове
+
         foreach (var piece in pieces)
         {
+            // Създаваме нова група, която да е дете на gameHolder-a
             Transform groupRoot = new GameObject("GroupRoot").transform;
             groupRoot.SetParent(gameHolder, worldPositionStays: false);
+
+            // Групата да е на същата позиция като парчето, без завъртания
             groupRoot.localPosition = piece.localPosition;
 
+
+            // Парчето да стане дете на групата
             piece.SetParent(groupRoot, worldPositionStays: true);
 
+            //Сетваме като се подаде това парче да се връща ази група, тоест казваме това паече към коя група принаделжи
             pieceToGroup[piece] = groupRoot;
+
+            //Сетваме че на тази група принадлежи точно това парче и към момента само то
             groupToPieces[groupRoot] = new List<Transform> { piece };
         }
     }
 
-    private List<Transform> GetAllGroups()
-    {
-        return new List<Transform>(groupToPieces.Keys);
-    }
-
-    //Scatter
+    //Функция, която разпръсва парчетата по видимата част на екрана и ги върти ако е нужно
     private void Scatter()
     {
+        // Взимаме половината от видимата височина, която вижда камерата
+        // Тоест ако върне 5, значи камерата вижда височината от -5 до 5 в глобални координати
         float orthoHeight = Camera.main.orthographicSize;
+
+        //Колко е широк екрана спрямо това колко е висок
+        // Например нещо подобно 1920 / 1080 ≈ 1.78
         float screenAspect = (float)Screen.width / Screen.height;
+
+        //Това е половината от видимата ширина
+        //Тоест ако се получи 8,5, екрана вижда от -8,5 до 8,5
         float orthoWidth = (screenAspect * orthoHeight);
 
-        // При Rect width/height са реални, при Irregular ги държим на клетка (приблизително)
+        //Намираме реалните размери на парчето в зависимост от това дали е уголемен родителя, тоест рамката
         float pieceWidth = width * gameHolder.localScale.x;
         float pieceHeight = height * gameHolder.localScale.y;
 
+        //Смаляваме видимия диапазон по x и y,за да сме сигурни, че няма да е възможно да сложим центъра на парчето в някой от краищата и част от парчето да не се вижда
+        //Ппц е достатъчно да извадим и половината размер, но за по-сигурно изваждаме целия размер
         orthoHeight -= pieceHeight;
         orthoWidth -= pieceWidth;
+
+        //Минаваме през всяка група и й задаваме случайни координати в позволения диапазон
+        //Ако нивото позволява й даваме и произволна ориентация
+        //Към този момент всяка група съдържа само по едно парче, тоест е същото като да го приложим върху групата
 
         foreach (Transform group in GetAllGroups())
         {
@@ -307,101 +344,154 @@ public class GameManger : MonoBehaviour
 
             group.position = new Vector3(x, y, -1);
         }
+
     }
 
-    //Border (правоъгълна рамка; за irregular пак е ок)
+    // Функция, която чертае рамката на пъзела
     private void UpdateBorder()
     {
+        // Достъпваме линията, която сме създали в UI
         LineRenderer lineRenderer = gameHolder.GetComponent<LineRenderer>();
 
+        //Размера на рамката е:
         float finalWidth = width * dimensions.x;
         float finalHeight = height * dimensions.y;
 
+        //Изчисляваме половината от размера, защото искаме да центрираме рамката спрямо (0,0)
         float halfWidth = finalWidth / 2f;
         float halfHeight = finalHeight / 2f;
 
+        //Искаме рамката да е зад парчета за удобство при реденето
         float borderZ = 0f;
 
+        //Присвояваме на съответния индекс на точката координатите
         lineRenderer.SetPosition(0, new Vector3(-halfWidth, halfHeight, borderZ));
         lineRenderer.SetPosition(1, new Vector3(halfWidth, halfHeight, borderZ));
         lineRenderer.SetPosition(2, new Vector3(halfWidth, -halfHeight, borderZ));
         lineRenderer.SetPosition(3, new Vector3(-halfWidth, -halfHeight, borderZ));
 
+        // Присвояваме дебелина на правата
         lineRenderer.startWidth = 0.1f;
         lineRenderer.endWidth = 0.1f;
+
+        // Показваме рамката 
         lineRenderer.enabled = true;
     }
 
+    //Функцията, която се вика на всеки кадър
     private void Update()
     {
+        //Ако таймерът вече работи, добави му времето, минало от предишния кадър и го обнови
         if (timerRunning)
         {
             currentTime += Time.deltaTime;
             UpdateTimerUI();
         }
 
+        // Ако в кадъра е хванато парче с натиснат ляв бутон
         if (Input.GetMouseButtonDown(0))
         {
+            //Input.mousePosition връща координатите в пиксели, къде точно е кликнала мишата на екрана
+            //  Camera.main.ScreenToWorldPoint(Input.mousePosition) превръща координати от екрана в глобални такива  
+            // Physics2D.Raycast( startPoint, direction ) 
+            // Проверяваме дали точно в тази точка има обект с collider
             RaycastHit2D hit = Physics2D.Raycast(
                 Camera.main.ScreenToWorldPoint(Input.mousePosition),
                 Vector2.zero
             );
 
+            //Ако мишката е хванала такъв обект
             if (hit)
             {
+                //На хванатия обект взимаме трансформацията и я присвояваме на член-данната, която пази кое парче ще се влачи
+
+                // Хванатото е парче
                 Transform pickedPiece = hit.transform;
 
-                if (!pieceToGroup.ContainsKey(pickedPiece))
-                    return;
-
+                //Взимаме групата, към която принадлежи парчето
                 Transform group = pieceToGroup[pickedPiece];
+
+                //Влачим ГРУПАТА, не парчето
                 draggingPiece = group;
 
+
+                //offset = позиция на парчето − позиция на мишката
+                //Тоест offset e разстоянието между точката, където сме кликнали, и центъра на парчето
+                //Това е вектор на отместването, идеята е да изглежда сякаш влачим парчето там, където сме го хванали, а не да да "скача" до центъра
                 offset = draggingPiece.position - Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+                //Vector3.back = new Vector3(0, 0, -1), искаме парчето визуално да ходи на другите докато го влачим
                 offset += Vector3.back;
             }
         }
 
+        // Въртене ako има хваната група и ако нивото позволява въртене
         if (draggingPiece && currentLevel.randomOrientation)
         {
             if (Input.GetKeyDown(KeyCode.R))
             {
+                //Въртим само на 90 градуса
                 draggingPiece.Rotate(0f, 0f, 90f);
             }
         }
 
+
+        // Ако е имало хванато парче и го пуснем
         if (draggingPiece && Input.GetMouseButtonUp(0))
         {
-            // различен snap за Rect и Irregular
-            if (IsIrregularLevel())
-                SnapAndDisableIfCorrect_Irregular();
-            else
-                SnapAndDisableIfCorrect_Rect(); // старото 1:1
+            // Застопоряваме групата и забраняваме вече да се мърда ако е достатъчно близо до правилното място
+            SnapAndDisableIfCorrect();
 
+            //Преместваме групата да е зад всички други парчета
+            //Vector3.forward = new Vector3(0, 0, 1)
             draggingPiece.position += Vector3.forward;
+
+            //Парчето е пуснато, тоест вече нямаме текущо парче и не искам е да влачим нищо
             draggingPiece = null;
         }
 
+        // Влачене, ако има хванато парче
         if (draggingPiece)
         {
+            //Взимаме текущата позиция на мишката 
             Vector3 newPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+            //Добавяме вектора на отместването за да изглежда "правилно" влаченето 
             newPosition += offset;
+
+            //Преместваме центъра с което реално преместваме и групата
             draggingPiece.position = newPosition;
         }
     }
 
-    // ===== SNAP: Rect (стария код 1:1, без промени) =====
-    private void SnapAndDisableIfCorrect_Rect()
-    {
-        if (draggingPiece == null) return;
-        if (!groupToPieces.ContainsKey(draggingPiece)) return;
 
+    private void SnapAndDisableIfCorrect()
+    {
+        //Има ли хванато парче
+        if (draggingPiece == null)
+        {
+            return;
+        }
+
+        //Има ли такава група
+        if (!groupToPieces.ContainsKey(draggingPiece))
+        {
+            return;
+        }
+
+        // За котва взимаме първия елемент на групата, защото винаги сме сигурни, че има такъв, защото така ги инициализираме
         Transform anchor = groupToPieces[draggingPiece][0];
+
+        //Взимаме индекс от името на парчето
         int anchorIndex = int.Parse(anchor.name);
 
+        //Координати спрямо рамката
         Vector2 targetAnchorLocal = correctLocalPos[anchorIndex];
+
+        // Глобални координати
         Vector3 targetAnchorWorld = gameHolder.TransformPoint(targetAnchorLocal);
 
+        // Текущи координати на котвата
         Vector3 anchorWorld = anchor.position;
 
         bool closeEnough = Vector2.Distance(anchorWorld, targetAnchorWorld) < (width / 2);
@@ -409,71 +499,29 @@ public class GameManger : MonoBehaviour
 
         if (closeEnough && rotationOk)
         {
+            // местим цялата групата така, че anchor да отиде на target
             Vector3 deltaWorld = targetAnchorWorld - anchorWorld;
             draggingPiece.position += deltaWorld;
 
+            //Искаме всички парчета да са вече неактивни
             foreach (var p in groupToPieces[draggingPiece])
                 p.GetComponent<BoxCollider2D>().enabled = false;
 
+            //Увеличаваме брой на частите, които са на правилните места с толкова, колкото елемента съдържа групата
+            //Тъй като още няма различна логика, броя точки е същия
             piecesCorrect += groupToPieces[draggingPiece].Count;
             scorePoints += groupToPieces[draggingPiece].Count;
 
+            //Актуализираме броя точки
             CorrectToShow.text = "Points: " + scorePoints;
+
+            //Актуализираме прогреса
             UpdateProgressUI();
 
+            //Ако сме завършили пъзела
             if (piecesCorrect == pieces.Count)
             {
-                timerRunning = false;
-                var repo = new XmlUserRepository();
-
-                int totalPoints = scorePoints + int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.totalPoints);
-                string pictureId = getPictureId(UserAndGameDetailsManager.Instance.CurrentGame.pictureId);
-                int unlockedUpToNew = UserAndGameDetailsManager.Instance.CurrentGame.difficulty + 1;
-                repo.AddPoints(UserAndGameDetailsManager.Instance.CurrentUser.username, totalPoints);
-                repo.updateLevelLocking(UserAndGameDetailsManager.Instance.CurrentUser.username, unlockedUpToNew, pictureId);
-                UserAndGameDetailsManager.Instance.CurrentUser.totalPoints = totalPoints.ToString();
-                UserAndGameDetailsManager.Instance.CurrentUser.unlockedUpTo[pictureId] = unlockedUpToNew.ToString();
-                ShowFinalPanel();
-            }
-        }
-    }
-
-    // ===== SNAP: Irregular (Collider2D + константа) =====
-    private void SnapAndDisableIfCorrect_Irregular()
-    {
-        if (draggingPiece == null) return;
-        if (!groupToPieces.ContainsKey(draggingPiece)) return;
-
-        Transform anchor = groupToPieces[draggingPiece][0];
-        int anchorIndex = int.Parse(anchor.name);
-
-        Vector2 targetAnchorLocal = correctLocalPos[anchorIndex];
-        Vector3 targetAnchorWorld = gameHolder.TransformPoint(targetAnchorLocal);
-
-        Vector3 anchorWorld = anchor.position;
-
-        bool closeEnough = Vector2.Distance(anchorWorld, targetAnchorWorld) < snapDistanceIrregular;
-        bool rotationOk = IsRotationCorrect(draggingPiece);
-
-        if (closeEnough && rotationOk)
-        {
-            Vector3 deltaWorld = targetAnchorWorld - anchorWorld;
-            draggingPiece.position += deltaWorld;
-
-            foreach (var p in groupToPieces[draggingPiece])
-            {
-                var col = p.GetComponent<Collider2D>();
-                if (col != null) col.enabled = false;
-            }
-
-            piecesCorrect += groupToPieces[draggingPiece].Count;
-            scorePoints += groupToPieces[draggingPiece].Count;
-
-            CorrectToShow.text = "Points: " + scorePoints;
-            UpdateProgressUI();
-
-            if (piecesCorrect == pieces.Count)
-            {
+                //Актуализираме броя точки
                 timerRunning = false;
                 var repo = new XmlUserRepository();
 
@@ -486,19 +534,7 @@ public class GameManger : MonoBehaviour
         }
     }
 
-    string getPictureId(int id)
-    {
-        switch (id)
-        {
-            case 1: return "prehistoric";
-            case 2: return "egypt";
-            case 3: return "knights";
-            case 4: return "future";
-
-        }
-        return null;
-    }
-    //Timer UI
+    //Ъпдейт на времето в формат 00:00
     private void UpdateTimerUI()
     {
         int totalSeconds = Mathf.FloorToInt(currentTime);
@@ -506,14 +542,16 @@ public class GameManger : MonoBehaviour
         int seconds = totalSeconds % 60;
 
         Timer.text = "Timer: " + $"{minutes:00}:{seconds:00}";
+
     }
 
-    //Progress UI
+    //Ъпдейт на прогреса
     private void UpdateProgressUI()
     {
+        //Ако още не са създани частите още, за да избегнем деле на 0
         if (pieces == null || pieces.Count == 0)
         {
-            Progress.text = "Progress: 0%";
+            Progress.text = "Progress: " + "0%";
             return;
         }
 
@@ -522,46 +560,65 @@ public class GameManger : MonoBehaviour
         Progress.text = "Progress: " + $"{percent}%";
     }
 
-    //Rotation check
+
+    //Проверка дали групата е с правилна ориентация
     private bool IsRotationCorrect(Transform group)
     {
-        if (!currentLevel.randomOrientation) return true;
+        //Ako нивот не позволява въртене, ориентацията винаги е правилна
+        if (!currentLevel.randomOrientation)
+        {
+            return true;
+        }
 
         float z = group.localEulerAngles.z;
+
+        //Закргляне към най-близкото кратно на 90 
         z = Mathf.Round(z / 90f) * 90f;
+
         return Mathf.Approximately(z, 0f);
     }
 
+    //Показване на панела за завършена игра
     private void ShowFinalPanel()
     {
         finalText.text = "Поздравления! Завършихте нивото\n" + $"Спечелени точки: {scorePoints}";
         finalPanel.SetActive(true);
     }
 
+    //Ако се натисне бутона за рестарт просто се зарежда Home сцената
     public void RestartLevel()
     {
         SceneManager.LoadScene("HomePage");
     }
 
-    // ===== HELP wrapper (избира кой вариант) =====
+    //Ако се избере бутона за помощ
     public void RequestHelp()
     {
-        if (IsIrregularLevel())
-            RequestHelp_Irregular();
-        else
-            RequestHelp_Rect(); // старото 1:1
-    }
+        //Проверява дали в нивото е позволено изобщо да се използва помощ
+        if (!currentLevel.help.enabled)
+        {
+            return;
+        }
 
-    // ===== HELP: Rect (старото ти RequestHelp 1:1) =====
-    private void RequestHelp_Rect()
-    {
-        if (!currentLevel.help.enabled) return;
-        if (helpUsed >= currentLevel.help.maxUses) return;
+        //Проверява дали има още позволени ползвания на help бутона спрямо конфигурацията
+        if (helpUsed >= currentLevel.help.maxUses)
+        {
+            return;
+        }
 
-        List<int> piecesToConnect = FindPiecesToConnect_Rect();
-        if (piecesToConnect == null) return;
+
+        List<int> piecesToConnect = FindPiecesToConnect();
+
+
+
+        if (piecesToConnect == null)
+        {
+            return;
+        }
+
 
         MergeGroupsByIndex(piecesToConnect);
+
 
         helpUsed++;
         scorePoints = scorePoints - currentLevel.help.costPoints;
@@ -571,27 +628,14 @@ public class GameManger : MonoBehaviour
             helpButton.interactable = false;
     }
 
-    // ===== HELP: Irregular (Collider2D) =====
-    private void RequestHelp_Irregular()
+
+    private List<Transform> GetAllGroups()
     {
-        if (!currentLevel.help.enabled) return;
-        if (helpUsed >= currentLevel.help.maxUses) return;
-
-        List<int> piecesToConnect = FindPiecesToConnect_Irregular();
-        if (piecesToConnect == null) return;
-
-        MergeGroupsByIndex(piecesToConnect);
-
-        helpUsed++;
-        scorePoints = scorePoints - currentLevel.help.costPoints;
-        CorrectToShow.text = "Points: " + scorePoints;
-
-        if (helpButton != null && helpUsed >= currentLevel.help.maxUses)
-            helpButton.interactable = false;
+        return new List<Transform>(groupToPieces.Keys);
     }
 
-    // ===== IsUnsolved Rect (старото ти 1:1) =====
-    private bool IsUnsolved_Rect(Transform piece)
+
+    private bool IsUnsolved(Transform piece)
     {
         var col = piece.GetComponent<BoxCollider2D>();
         return col != null
@@ -599,139 +643,113 @@ public class GameManger : MonoBehaviour
                && groupToPieces[pieceToGroup[piece]].Count == 1;
     }
 
-    // ===== IsUnsolved Irregular =====
-    private bool IsUnsolved_Irregular(Transform piece)
+    private List<int> FindPiecesToConnect()
     {
-        var col = piece.GetComponent<Collider2D>();
-        return col != null
-               && col.enabled
-               && groupToPieces[pieceToGroup[piece]].Count == 1;
-    }
-
-    // ===== FindPiecesToConnect Rect (старото ти 1:1) =====
-    private List<int> FindPiecesToConnect_Rect()
-    {
+        // взимаме стартово парче, в случая взима подред първото парче, което не си е на мястото започвайки от долния ляв ъгъл
         List<int> resultToReturn = new List<int>();
         for (int i = 0; i < pieces.Count; i++)
         {
             Transform startPiece = pieces[i];
-            if (!IsUnsolved_Rect(startPiece))
+            //Ако парчето си е вече на мястото, минаваме на следващото
+            if (!IsUnsolved(startPiece))
                 continue;
 
+            //Ако съм намерила парче, което не си е на мястото
             int idx = int.Parse(startPiece.name);
             int col = idx % dimensions.x;
             int row = idx / dimensions.x;
 
-            if (col > 0 && IsUnsolved_Rect(pieces[idx - 1]))
+            // В ляво
+            if (col > 0 && IsUnsolved(pieces[idx - 1]))
             {
                 resultToReturn.Add(idx);
                 resultToReturn.Add(idx - 1);
                 return resultToReturn;
+
             }
-            if (col < dimensions.x - 1 && IsUnsolved_Rect(pieces[idx + 1]))
+            // В дясно
+            if (col < dimensions.x - 1 && IsUnsolved(pieces[idx + 1]))
             {
                 resultToReturn.Add(idx);
                 resultToReturn.Add(idx + 1);
                 return resultToReturn;
+
             }
-            if (row < dimensions.y - 1 && IsUnsolved_Rect(pieces[idx + dimensions.x]))
+            //Отгоре
+            if (row < dimensions.y - 1 && IsUnsolved(pieces[idx + dimensions.x]))
             {
                 resultToReturn.Add(idx);
                 resultToReturn.Add(idx + dimensions.x);
                 return resultToReturn;
+
             }
-            if (row > 0 && IsUnsolved_Rect(pieces[idx - dimensions.x]))
+            //Отдолу
+            if (row > 0 && IsUnsolved(pieces[idx - dimensions.x]))
             {
                 resultToReturn.Add(idx);
                 resultToReturn.Add(idx - dimensions.x);
                 return resultToReturn;
+
             }
+
         }
+
         return null;
     }
 
-    // ===== FindPiecesToConnect Irregular =====
-    private List<int> FindPiecesToConnect_Irregular()
-    {
-        List<int> resultToReturn = new List<int>();
-        for (int i = 0; i < pieces.Count; i++)
-        {
-            Transform startPiece = pieces[i];
-            if (!IsUnsolved_Irregular(startPiece))
-                continue;
-
-            int idx = int.Parse(startPiece.name);
-            int col = idx % dimensions.x;
-            int row = idx / dimensions.x;
-
-            if (col > 0 && IsUnsolved_Irregular(pieces[idx - 1]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx - 1);
-                return resultToReturn;
-            }
-            if (col < dimensions.x - 1 && IsUnsolved_Irregular(pieces[idx + 1]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx + 1);
-                return resultToReturn;
-            }
-            if (row < dimensions.y - 1 && IsUnsolved_Irregular(pieces[idx + dimensions.x]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx + dimensions.x);
-                return resultToReturn;
-            }
-            if (row > 0 && IsUnsolved_Irregular(pieces[idx - dimensions.x]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx - dimensions.x);
-                return resultToReturn;
-            }
-        }
-        return null;
-    }
-
-    // ===== Merge groups (оставено както беше при теб) =====
     private Transform FindPieceByIndex(int index)
     {
         foreach (var p in pieces)
         {
-            if (p.name == index.ToString()) return p;
+            if (p.name == index.ToString())
+            {
+                return p;
+            }
         }
         return null;
     }
-
     private void MergeGroupsByIndex(List<int> indexes)
     {
+
         Transform firstPiece = FindPieceByIndex(indexes[0]);
         Transform secondPiece = FindPieceByIndex(indexes[1]);
 
         Transform groupFirst = pieceToGroup[firstPiece];
         Transform groupSecond = pieceToGroup[secondPiece];
 
+        //И двете парчета да станат с правилна ориентация
+
         if (currentLevel.randomOrientation)
         {
             groupFirst.localEulerAngles = Vector3.zero;
             groupSecond.localEulerAngles = Vector3.zero;
         }
+        //Преместване на второто парче да иде при първото
 
+        // правилният офсет между двете парчета за да са на правилното място
         Vector3 offsetLocal = correctLocalPos[indexes[1]] - correctLocalPos[indexes[0]];
+
+        // превръщаме офсета в глобални координати
         Vector3 offsetGlobal = gameHolder.TransformVector(offsetLocal);
 
+        //пресмятаме къде трябва да е второто парче
         Vector3 targetSecondGlobal = firstPiece.position + offsetGlobal;
+
+        // местим втората група
         Vector3 delta = targetSecondGlobal - secondPiece.position;
         groupSecond.position += delta;
+
+
+        //Сливане на групите
 
         secondPiece.SetParent(groupFirst);
         pieceToGroup[secondPiece] = groupFirst;
         groupToPieces[groupFirst].Add(secondPiece);
 
+
         groupToPieces.Remove(groupSecond);
         Destroy(groupSecond.gameObject);
+
     }
+
 }
-
-
-
-

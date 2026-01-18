@@ -23,6 +23,7 @@ public class HomeSceneManager : MonoBehaviour
     public string gameSceneName = "GameScene";
 
     private int selectedPictureId = -1;
+    private string selectedPictureKey = "";
     private int maxUnlockedForSelectedPicture = 1;
 
     private Coroutine hideMsgCo;
@@ -69,11 +70,19 @@ public class HomeSceneManager : MonoBehaviour
         }
 
         selectedPictureId = pictureId;
+        selectedPictureKey = PictureIdToKey(pictureId);
+
+        if (string.IsNullOrEmpty(selectedPictureKey))
+        {
+            ShowMessage("Невалидна картинка (липсва key).");
+            return;
+        }
 
         UserInfoClass user = UserAndGameDetailsManager.Instance.CurrentUser;
-        maxUnlockedForSelectedPicture = GetMaxUnlockedDifficulty(user, selectedPictureId);
+        maxUnlockedForSelectedPicture = GetMaxUnlockedDifficulty(user, selectedPictureKey);
 
-        // Връщаме dropdown-а на празната опция "Избери ниво…"
+        Debug.Log($"[PIC] id={selectedPictureId} key={selectedPictureKey} maxUnlocked={maxUnlockedForSelectedPicture}");
+
         if (difficultyDropdown != null)
         {
             difficultyDropdown.SetValueWithoutNotify(0);
@@ -85,6 +94,8 @@ public class HomeSceneManager : MonoBehaviour
 
     private void OnDifficultySelected(int dropdownIndex)
     {
+        Debug.Log($"[TRY] pic={selectedPictureId} index={dropdownIndex} maxUnlocked={maxUnlockedForSelectedPicture}");
+
         // 0 = "Избери ниво..." -> не правим нищо и НЕ показваме съобщение
         if (dropdownIndex == 0)
         {
@@ -112,7 +123,8 @@ public class HomeSceneManager : MonoBehaviour
         // заключено
         if (chosenDifficulty > maxUnlockedForSelectedPicture)
         {
-            ShowMessage($"Ниво {chosenDifficulty} е заключено. Първо реши предишните нива.");
+            ShowMessage($"Ниво {chosenDifficulty} е заключено. Отключено е до {maxUnlockedForSelectedPicture}.");
+            if (difficultyDropdown != null) difficultyDropdown.value = 0;
             return;
         }
 
@@ -121,19 +133,21 @@ public class HomeSceneManager : MonoBehaviour
         SceneManager.LoadScene(gameSceneName);
     }
 
-    private int GetMaxUnlockedDifficulty(UserInfoClass user, int pictureId)
+    private int GetMaxUnlockedDifficulty(UserInfoClass user, string pictureKey)
     {
         if (user == null) return 1;
+        if (user.unlockedUpTo == null) return 1;
 
-        if (user.unlockedUpTo != null &&
-            user.unlockedUpTo.TryGetValue(pictureId.ToString(), out string val) &&
-            int.TryParse(val, out int diff))
+        if (user.unlockedUpTo.TryGetValue(pictureKey, out string val) &&
+            int.TryParse(val, out int maxUnlocked))
         {
-            return Mathf.Clamp(diff, 1, 4);
+            return Mathf.Clamp(maxUnlocked, 1, 4);
         }
 
         return 1;
     }
+
+
 
     private void ShowMessage(string msg)
     {
@@ -197,4 +211,36 @@ public class HomeSceneManager : MonoBehaviour
             messageRect.position = leftMid + new Vector3(-padding, 0f, 0f);
         }
     }
+
+    private void OnEnable()
+    {
+        if (UserAndGameDetailsManager.Instance == null ||
+            !UserAndGameDetailsManager.Instance.HasUser())
+            return;
+
+        // ако нямаме избрана картинка (key), няма какво да обновяваме
+        if (string.IsNullOrEmpty(selectedPictureKey))
+            return;
+
+        UserInfoClass user = UserAndGameDetailsManager.Instance.CurrentUser;
+
+        // ✅ важно: подаваме key, не id
+        maxUnlockedForSelectedPicture = GetMaxUnlockedDifficulty(user, selectedPictureKey);
+
+        Debug.Log($"[HOME REFRESH] id={selectedPictureId} key={selectedPictureKey} maxUnlocked={maxUnlockedForSelectedPicture}");
+    }
+
+
+    private string PictureIdToKey(int pictureId)
+    {
+        switch (pictureId)
+        {
+            case 1: return "prehistoric";
+            case 2: return "egypt";
+            case 3: return "knights";
+            case 4: return "future";
+            default: return "";
+        }
+    }
+
 }

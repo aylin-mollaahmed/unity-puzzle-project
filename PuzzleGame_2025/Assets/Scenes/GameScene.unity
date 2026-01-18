@@ -2164,18 +2164,10 @@ MonoBehaviour:
   Progress: {fileID: 493456167}
   gameHolder: {fileID: 544531886}
   piecePrefab: {fileID: 5007773508221021893, guid: b3cded4bf9fa40b4b98b286b9500d0f3, type: 3}
-  irregularPiecePrefab: {fileID: 1585836114719250255, guid: fef7aa1757dd96a4586cfcb566a771ff, type: 3}
-  tileSizeLevel3: 256
-  tileSizeLevel4: 256
-  paddingPixels: 20
-  irregularPPU: 100
-  irregularCellW: 1
-  irregularCellH: 1
   helpButton: {fileID: 795008670}
   finalPanel: {fileID: 1561826719}
   finalText: {fileID: 73612917}
-  playAgainButton: {fileID: 56486976}
-  snapDistanceIrregular: 0.15
+  playAgainButton: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
