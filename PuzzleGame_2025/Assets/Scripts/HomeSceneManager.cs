@@ -124,7 +124,12 @@ public class HomeSceneManager : MonoBehaviour
         if (chosenDifficulty > maxUnlockedForSelectedPicture)
         {
             ShowMessage($"Ниво {chosenDifficulty} е заключено. Отключено е до {maxUnlockedForSelectedPicture}.");
-            if (difficultyDropdown != null) difficultyDropdown.value = 0;
+            if (difficultyDropdown != null)
+            {
+                difficultyDropdown.SetValueWithoutNotify(0);
+                difficultyDropdown.RefreshShownValue();
+            }
+
             return;
         }
 
