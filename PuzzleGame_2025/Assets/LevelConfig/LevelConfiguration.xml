@@ -16,5 +16,6 @@
 		<Difficulty id="4" pieceShape="Irregular" randomOrientation="true" shortSidePieces="3">
 			<Help enabled="true" maxUses="2" costPoints="1" />
 		</Difficulty>
+		
 	</Difficulties>
 </GameConfig>

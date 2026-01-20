@@ -20,21 +20,26 @@ public class AuthManager : MonoBehaviour
 
     private void Awake()
     {
-        
         repo = new XmlUserRepository();
-
-        //Изчиства ако е имало някакво съобщение за грешка
-        SetMessage("");
+       
     }
 
     //Контролери
     public void OnRegisterClicked()
     {
-       
+
+        if (regUsername.text.Length == 0 || loginPassword.text.Length == 0)
+        {
+            SetMessage("Моля, въведи име и парола.");
+            return;
+        }
+        //Ако е имало съобщения от логин-а да се махнат
+        SetMessage("");
         var msg = "";
         var wasRegistryOk = repo.TryRegister(regUsername.text, regPassword.text,  ref msg);
         SetMessage(msg);
 
+        //Ако регистрацията е успешна да се затрият полета, ако не е, невалидните данни да останат
         if (wasRegistryOk)
         {
             regUsername.text = "";

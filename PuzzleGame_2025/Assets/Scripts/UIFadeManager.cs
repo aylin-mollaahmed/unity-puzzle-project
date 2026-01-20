@@ -12,83 +12,82 @@ public class UIFadeManager : MonoBehaviour
     [SerializeField] private CanvasGroup loginPanelGroup;
     [SerializeField] private CanvasGroup registryPanelGroup;
 
-    [Header("Timing")]
-    [SerializeField] private float fadeOutTime = 0.35f;
-    [SerializeField] private float fadeInTime = 0.35f;
-
     private bool isTransitioning = false;
 
-    // Контролери
+    // Контролери при клик на някой от бутоните
     public void OpenLoginFromTitle()
     {
-        if (isTransitioning) return;
+        if (isTransitioning)
+        {
+            return;
+        }
         StartCoroutine(OpenPanelFromTitle(loginPanelGroup));
     }
 
     
     public void OpenRegistryFromLogin()
     {
-        if (isTransitioning) return;
+        if (isTransitioning)
+        {
+            return;
+        }
         StartCoroutine(SwitchPanels(loginPanelGroup, registryPanelGroup));
     }
 
     public void OpenLoginFromRegistry()
     {
-        if (isTransitioning) return;
+        if (isTransitioning)
+        {
+            return;
+        }
         StartCoroutine(SwitchPanels(registryPanelGroup, loginPanelGroup));
     }
 
 
 
-    //Корутини (Coroutines) 
+  
     private IEnumerator OpenPanelFromTitle(CanvasGroup panel)
     {
-        //Заключвам, за да не се стартира нова анимация 
+        //Заключваме, за да не се стартира нова анимация преди да е приключила тази
         isTransitioning = true;
-        //Редът със снимки и бутона за старт да не могат вече да се натискат
-        SetGroupInteractable(photoRowGroup, false);
-        SetGroupInteractable(startButtonGroup, false);
-        //Да започне избледняване кадър по кадър, като първо избледнява редът със снимки и когато е готов - бутона
-        yield return StartCoroutine(FadeCanvasGroup(photoRowGroup, 1f, 0f, fadeOutTime));
-        yield return StartCoroutine(FadeCanvasGroup(startButtonGroup, 1f, 0f, fadeOutTime));
-        //
-        if (photoRowGroup != null) {
 
-            photoRowGroup.gameObject.SetActive(false);
 
-        }
-        if (startButtonGroup != null) {
+        //Да започне избледняване кадър по кадър
+        yield return StartCoroutine(FadeCanvasGroup(photoRowGroup, 1f, 0f, 0.35f));
+        yield return StartCoroutine(FadeCanvasGroup(startButtonGroup, 1f, 0f, 0.35f));
 
-            startButtonGroup.gameObject.SetActive(false);
-        }
-        
+
+        //Редът със снимки и бутона за старт да не могат вече да се натискат и да станат неактивни
+        SetGroupNotActiveAndNotClickable(photoRowGroup);
+        SetGroupNotActiveAndNotClickable(startButtonGroup);
+
         //Прави панела активен и кликаем
-        SetPanelActiveAndClickable(panel);
-        //Показва панела 
-        yield return StartCoroutine(FadeCanvasGroup(panel, 0f, 1f, fadeInTime));
+        SetGroupActiveAndClickable(panel);
+
+        //Показва панела кадър по кадър
+        yield return StartCoroutine(FadeCanvasGroup(panel, 0f, 1f, 0.35f));
+
         // Освобождава за нови анимации
         isTransitioning = false;
     }
+
     //Смяна от един панел към друг
     private IEnumerator SwitchPanels(CanvasGroup from, CanvasGroup to)
     {
-        //Затваря за бъдещи анимации
+        //Заключваме, за да не се стартира нова анимация преди да е приключила тази
         isTransitioning = true;
 
-        //Забранява кликането на стария панел
-        SetGroupInteractable(from, false);
+        //Постепенно избледняване на текущия панел
+        yield return StartCoroutine(FadeCanvasGroup(from, 1f, 0f, 0.35f));
 
-        //Постепенно го избледнява
-        yield return StartCoroutine(FadeCanvasGroup(from, 1f, 0f, fadeOutTime));
-
-        //Прави стария панел неактивен
-        SetPanelNotActive(from);
+        //Текущия панел става некликаем и неактивен
+        SetGroupNotActiveAndNotClickable(from);
 
         //Прави новия панел ативен и кликаем
-        SetPanelActiveAndClickable(to);
+        SetGroupActiveAndClickable(to);
 
         //Показва бавно новия панел
-        yield return StartCoroutine(FadeCanvasGroup(to, 0f, 1f, fadeInTime));
+        yield return StartCoroutine(FadeCanvasGroup(to, 0f, 1f, 0.35f));
 
         //Отваря за нови анимации
         isTransitioning = false;
@@ -96,20 +95,27 @@ public class UIFadeManager : MonoBehaviour
 
    
     // Помощни функции
-    private void SetPanelActiveAndClickable(CanvasGroup cg)
+    private void SetGroupActiveAndClickable(CanvasGroup panel)
     {
-        if (cg == null) 
+        if (panel == null)
+        {
             return;
-        cg.gameObject.SetActive(true);
-        SetGroupInteractable(cg, true);
+        }
+        panel.gameObject.SetActive(true);
+        panel.interactable = true;
+        panel.blocksRaycasts = true;
+    }
+    private void SetGroupNotActiveAndNotClickable(CanvasGroup panel)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+        panel.gameObject.SetActive(false);
+        panel.interactable = false;
+        panel.blocksRaycasts = false;
     }
 
-    private void SetPanelNotActive(CanvasGroup cg)
-    {
-        if (cg == null) 
-            return;
-        cg.gameObject.SetActive(false);
-    }
 
     private IEnumerator FadeCanvasGroup(CanvasGroup cg, float from, float to, float duration)
     {
@@ -138,11 +144,5 @@ public class UIFadeManager : MonoBehaviour
         cg.alpha = to;
     }
 
-    private void SetGroupInteractable(CanvasGroup cg, bool value)
-    {
-        if (cg == null) 
-            return;
-        cg.interactable = value;
-        cg.blocksRaycasts = value;
-    }
+    
 }
