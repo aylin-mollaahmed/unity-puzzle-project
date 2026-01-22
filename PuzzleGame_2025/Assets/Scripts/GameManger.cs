@@ -559,8 +559,9 @@ public class GameManger : MonoBehaviour
 
                 int totalPoints = scorePoints + int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.totalPoints);
                 string pictureId = getPictureId(UserAndGameDetailsManager.Instance.CurrentGame.pictureId);
-                int unlockedUpToNew = UserAndGameDetailsManager.Instance.CurrentGame.difficulty + 1;
+                int unlockedUpToNew = Mathf.Max(int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.unlockedUpTo[pictureId]),UserAndGameDetailsManager.Instance.CurrentGame.difficulty + 1);
                 repo.AddPoints(UserAndGameDetailsManager.Instance.CurrentUser.username, totalPoints);
+                
                 repo.updateLevelLocking(UserAndGameDetailsManager.Instance.CurrentUser.username, unlockedUpToNew, pictureId);
                 UserAndGameDetailsManager.Instance.CurrentUser.totalPoints = totalPoints.ToString();
 
@@ -689,51 +690,7 @@ public class GameManger : MonoBehaviour
         return FindPRectPiecesToConnect();
     }
     
-    private List<int> FindRectPiecesToConnect()
-    {
-        List<int> resultToReturn = new List<int>();
-
-        for (int i = 0; i < pieces.Count; i++)
-        {
-            Transform startPiece = pieces[i];
-            if (!IsUnsolved(startPiece))
-                continue;
-
-            int idx = int.Parse(startPiece.name);
-            int col = idx % dimensions.x;
-            int row = idx / dimensions.x;
-
-            if (col > 0 && IsUnsolved(pieces[idx - 1]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx - 1);
-                return resultToReturn;
-            }
-
-            if (col < dimensions.x - 1 && IsUnsolved(pieces[idx + 1]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx + 1);
-                return resultToReturn;
-            }
-
-            if (row < dimensions.y - 1 && IsUnsolved(pieces[idx + dimensions.x]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx + dimensions.x);
-                return resultToReturn;
-            }
-
-            if (row > 0 && IsUnsolved(pieces[idx - dimensions.x]))
-            {
-                resultToReturn.Add(idx);
-                resultToReturn.Add(idx - dimensions.x);
-                return resultToReturn;
-            }
-        }
-
-        return null;
-    }
+   
 
 
     // ===================== 2) ДОБАВИ ТОВА: ТРИЪГЪЛНИ СЪСЕДИ (BL->TR диагонал както при теб) =====================
