@@ -151,6 +151,19 @@ public class GameManger : MonoBehaviour
 
             case "Irregular":
 
+                dimensions = GetDimensions(
+                puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture,
+                currentLevel.piecesCount
+    );
+
+                CreateTrianglePieces(puzzleImages[UserAndGameDetailsManager.Instance.CurrentGame.pictureId - 1].texture);
+
+                InitGroups();
+                Scatter();
+                UpdateBorder();
+
+                piecesCorrect = 0;
+                scorePoints = 0;
                 break;
 
             default:
@@ -767,4 +780,131 @@ public class GameManger : MonoBehaviour
         }
         return null;
     }
+
+    void CreateTrianglePieces(Texture2D jigsawTexture)
+    {
+        // 1) Размери като при квадратните парчета (клетките)
+        height = 1f / dimensions.y;
+        float aspect = (float)jigsawTexture.width / jigsawTexture.height;
+        width = aspect / dimensions.x;
+
+        // 2) Триъгълниците са 2 * брой клетки
+        int totalSquares = dimensions.x * dimensions.y;
+        int totalTriangles = totalSquares * 2;
+
+        correctLocalPos = new Vector3[totalTriangles];
+        pieces.Clear();
+
+        float uStep = 1f / dimensions.x;
+        float vStep = 1f / dimensions.y;
+
+        for (int row = 0; row < dimensions.y; row++)
+        {
+            for (int col = 0; col < dimensions.x; col++)
+            {
+                // Центърът на клетката (същата логика като при Rect)
+                Vector3 cellCenterLocal = new Vector3(
+                    (-width * dimensions.x / 2f) + (width / 2f) + (width * col),
+                    (-height * dimensions.y / 2f) + (height / 2f) + (height * row),
+                    -1f
+                );
+
+                int squareIndex = (row * dimensions.x) + col;
+
+                // UV ъгли на клетката
+                Vector2 uvBL = new Vector2(uStep * col, vStep * row);             // bottom-left
+                Vector2 uvBR = new Vector2(uStep * (col + 1), vStep * row);       // bottom-right
+                Vector2 uvTL = new Vector2(uStep * col, vStep * (row + 1));       // top-left
+                Vector2 uvTR = new Vector2(uStep * (col + 1), vStep * (row + 1)); // top-right
+
+                // --- Триъгълник 0 (по диагонал BL->TR): BL, BR, TR
+                {
+                    int triIndex = squareIndex * 2 + 0;
+
+                    Transform piece = Instantiate(piecePrefab, gameHolder);
+                    piece.localPosition = cellCenterLocal;
+                    piece.localScale = new Vector3(width, height, 1f);
+                    piece.name = triIndex.ToString();
+
+                    BuildTriangleMesh(piece,
+                        new Vector3(-0.5f, -0.5f, 0f),  // BL
+                        new Vector3(0.5f, -0.5f, 0f),  // BR
+                        new Vector3(0.5f, 0.5f, 0f),  // TR
+                        uvBL, uvBR, uvTR,
+                        jigsawTexture
+                    );
+
+                    correctLocalPos[triIndex] = piece.localPosition;
+                    pieces.Add(piece);
+                }
+
+                // --- Триъгълник 1 (по диагонал BL->TR): BL, TR, TL
+                {
+                    int triIndex = squareIndex * 2 + 1;
+
+                    Transform piece = Instantiate(piecePrefab, gameHolder);
+                    piece.localPosition = cellCenterLocal;
+                    piece.localScale = new Vector3(width, height, 1f);
+                    piece.name = triIndex.ToString();
+
+                    BuildTriangleMesh(piece,
+                        new Vector3(-0.5f, -0.5f, 0f),  // BL
+                        new Vector3(0.5f, 0.5f, 0f),  // TR
+                        new Vector3(-0.5f, 0.5f, 0f),  // TL
+                        uvBL, uvTR, uvTL,
+                        jigsawTexture
+                    );
+
+                    correctLocalPos[triIndex] = piece.localPosition;
+                    pieces.Add(piece);
+                }
+            }
+        }
     }
+
+    private void BuildTriangleMesh(
+    Transform piece,
+    Vector3 v0, Vector3 v1, Vector3 v2,
+    Vector2 uv0, Vector2 uv1, Vector2 uv2,
+    Texture2D tex)
+    {
+        MeshFilter mf = piece.GetComponent<MeshFilter>();
+        MeshRenderer mr = piece.GetComponent<MeshRenderer>();
+
+        Mesh mesh = new Mesh();
+        mesh.vertices = new Vector3[] { v0, v1, v2 };
+        mesh.uv = new Vector2[] { uv0, uv1, uv2 };
+        mesh.triangles = new int[] { 0, 1, 2 };
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        mf.mesh = mesh;
+
+        // Вземаме Unlit shader, който съществува в проекта (URP или Built-in)
+        Shader sh =
+            Shader.Find("Universal Render Pipeline/Unlit") ??
+            Shader.Find("Universal Render Pipeline/Unlit Shader") ??
+            Shader.Find("Sprites/Default") ??
+            Shader.Find("Unlit/Texture");
+
+        if (sh == null)
+        {
+            Debug.LogError("NO suitable Unlit shader found. Project may be using a different pipeline.");
+            return;
+        }
+
+        // Създаваме нов материал за всяко парче (за тест е най-сигурно)
+        Material mat = new Material(sh);
+
+        // Различните shader-и ползват различни property-та
+        if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", tex);
+        if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", tex);
+
+        mr.material = mat;
+
+        // Да са отпред като sorting (важно в 2D сцени)
+        mr.sortingLayerName = "Default";
+        mr.sortingOrder = 10;
+    }
+
+
+}
