@@ -679,8 +679,181 @@ public class GameManger : MonoBehaviour
                && col.enabled
                && groupToPieces[pieceToGroup[piece]].Count == 1;
     }
-
     private List<int> FindPiecesToConnect()
+    {
+        // ако е Irregular (триъгълници) -> друга логика за съседство
+        if (currentLevel != null && currentLevel.pieceShape == "Irregular")
+            return FindTrianglePiecesToConnect();
+
+        // иначе си остава старата логика за Rect
+        return FindPRectPiecesToConnect();
+    }
+    
+    private List<int> FindRectPiecesToConnect()
+    {
+        List<int> resultToReturn = new List<int>();
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            Transform startPiece = pieces[i];
+            if (!IsUnsolved(startPiece))
+                continue;
+
+            int idx = int.Parse(startPiece.name);
+            int col = idx % dimensions.x;
+            int row = idx / dimensions.x;
+
+            if (col > 0 && IsUnsolved(pieces[idx - 1]))
+            {
+                resultToReturn.Add(idx);
+                resultToReturn.Add(idx - 1);
+                return resultToReturn;
+            }
+
+            if (col < dimensions.x - 1 && IsUnsolved(pieces[idx + 1]))
+            {
+                resultToReturn.Add(idx);
+                resultToReturn.Add(idx + 1);
+                return resultToReturn;
+            }
+
+            if (row < dimensions.y - 1 && IsUnsolved(pieces[idx + dimensions.x]))
+            {
+                resultToReturn.Add(idx);
+                resultToReturn.Add(idx + dimensions.x);
+                return resultToReturn;
+            }
+
+            if (row > 0 && IsUnsolved(pieces[idx - dimensions.x]))
+            {
+                resultToReturn.Add(idx);
+                resultToReturn.Add(idx - dimensions.x);
+                return resultToReturn;
+            }
+        }
+
+        return null;
+    }
+
+
+    // ===================== 2) ДОБАВИ ТОВА: ТРИЪГЪЛНИ СЪСЕДИ (BL->TR диагонал както при теб) =====================
+    //
+    // Индексиране при теб:
+    // squareIndex = row*W + col
+    // triIndex0 = squareIndex*2 + 0  (BL, BR, TR)  -> "долно-десния" триъгълник в клетката
+    // triIndex1 = squareIndex*2 + 1  (BL, TR, TL)  -> "горно-ляв" триъгълник в клетката
+    //
+    // Реални съседи по РЪБ (не по "idx±1"):
+    // - Вътрешният диагонал (в клетката): tri0 <-> tri1 (винаги)
+    // - Вертикален ръб: tri1 (ляво-горе) има "ляв" ръб и "горен" ръб; tri0 има "десен" и "долен"
+    //   * Ляв съсед на tri1 е tri0 на клетката вляво
+    //   * Горен съсед на tri1 е tri0 на клетката отгоре
+    //   * Десен съсед на tri0 е tri1 на клетката вдясно
+    //   * Долен съсед на tri0 е tri1 на клетката отдолу
+    //
+    private List<int> FindTrianglePiecesToConnect()
+    {
+        // Важно: тук НЕ използваме idx%dimensions.x директно, защото idx е триъгълник, не клетка.
+        List<int> result = new List<int>();
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            Transform startPiece = pieces[i];
+            if (!IsUnsolved(startPiece))
+                continue;
+
+            int triIdx = int.Parse(startPiece.name);
+
+            // 1) намираме клетката и кой триъгълник е (0 или 1)
+            int squareIndex = triIdx / 2;
+            int triInSquare = triIdx % 2; // 0 или 1
+
+            int col = squareIndex % dimensions.x;
+            int row = squareIndex / dimensions.x;
+
+            // Вземи списък със съседни триъгълници по ръб
+            List<int> neighbors = GetTriangleNeighbors(triIdx, row, col, triInSquare);
+
+            // Върни първия валиден съсед (несъбран и със самостоятелна група)
+            for (int n = 0; n < neighbors.Count; n++)
+            {
+                int nb = neighbors[n];
+                if (nb < 0 || nb >= pieces.Count) continue;
+
+                // намираме самото парче по индекс (името му е индекса)
+                Transform neighborPiece = FindPieceByIndex(nb);
+                if (neighborPiece == null) continue;
+
+                if (IsUnsolved(neighborPiece))
+                {
+                    result.Add(triIdx);
+                    result.Add(nb);
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<int> GetTriangleNeighbors(int triIdx, int row, int col, int triInSquare)
+    {
+        // triInSquare:
+        // 0 = (BL, BR, TR)  => има ръбове: долен, десен, диагонал
+        // 1 = (BL, TR, TL)  => има ръбове: ляв, горен, диагонал
+        //
+        // Вътрешният диагонал съсед винаги е "другия" в същата клетка
+        int squareIndex = triIdx / 2;
+
+        int tri0 = squareIndex * 2 + 0;
+        int tri1 = squareIndex * 2 + 1;
+
+        List<int> res = new List<int>(3);
+
+        // 1) диагонален съсед (в клетката)
+        res.Add(triInSquare == 0 ? tri1 : tri0);
+
+        // 2) външни съседи по ръб
+        if (triInSquare == 0)
+        {
+            // tri0: десен ръб -> триъгълник 1 на клетката вдясно
+            if (col < dimensions.x - 1)
+            {
+                int rightSquare = squareIndex + 1;
+                res.Add(rightSquare * 2 + 1);
+            }
+
+            // tri0: долен ръб -> триъгълник 1 на клетката отдолу
+            if (row > 0)
+            {
+                int downSquare = squareIndex - dimensions.x;
+                res.Add(downSquare * 2 + 1);
+            }
+        }
+        else
+        {
+            // tri1: ляв ръб -> триъгълник 0 на клетката вляво
+            if (col > 0)
+            {
+                int leftSquare = squareIndex - 1;
+                res.Add(leftSquare * 2 + 0);
+            }
+
+            // tri1: горен ръб -> триъгълник 0 на клетката отгоре
+            if (row < dimensions.y - 1)
+            {
+                int upSquare = squareIndex + dimensions.x;
+                res.Add(upSquare * 2 + 0);
+            }
+        }
+
+        return res;
+    }
+
+
+    
+
+    private List<int> FindPRectPiecesToConnect()
     {
         // взимаме стартово парче, в случая взима подред първото парче, което не си е на мястото започвайки от долния ляв ъгъл
         List<int> resultToReturn = new List<int>();
