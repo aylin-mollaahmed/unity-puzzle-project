@@ -30,7 +30,7 @@ public class AuthManager : MonoBehaviour
 
         if (regUsername.text.Length == 0 || loginPassword.text.Length == 0)
         {
-            SetMessage("Моля, въведи име и парола.");
+            SetMessage("Please enter a username and password.");
             return;
         }
         //Ако е имало съобщения от логин-а да се махнат
@@ -52,20 +52,22 @@ public class AuthManager : MonoBehaviour
       
         if (loginUsername.text.Length == 0 || loginPassword.text.Length == 0)
         {
-            SetMessage("Моля, въведи име и парола.");
+            SetMessage("Please enter a username and password.");
             return;
         }
 
         if (repo.ValidateLogin(loginUsername.text, loginPassword.text))
         {
-            SetMessage("Успешен вход!");
+            SetMessage("Login successful!");
             UserInfoClass currentUser = repo.LoadUserInfo(loginUsername.text);
             UserAndGameDetailsManager.Instance.SetUser(currentUser);
             SceneManager.LoadScene("HomePage");
         }
         else
         {
-            SetMessage("Грешно потребителско име или парола.");
+           loginUsername.text = "";
+           loginPassword.text = "";
+            SetMessage("Invalid username or password.");
         }
     }
 

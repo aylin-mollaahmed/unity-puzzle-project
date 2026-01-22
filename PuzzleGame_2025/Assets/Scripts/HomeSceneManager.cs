@@ -217,13 +217,11 @@ public class HomeSceneManager : MonoBehaviour
             !UserAndGameDetailsManager.Instance.HasUser())
             return;
 
-        // ако нямаме избрана картинка (key), няма какво да обновяваме
         if (string.IsNullOrEmpty(selectedPictureKey))
             return;
 
         UserInfoClass user = UserAndGameDetailsManager.Instance.CurrentUser;
 
-        // ✅ важно: подаваме key, не id
         maxUnlockedForSelectedPicture = GetMaxUnlockedDifficulty(user, selectedPictureKey);
 
         Debug.Log($"[HOME REFRESH] id={selectedPictureId} key={selectedPictureKey} maxUnlocked={maxUnlockedForSelectedPicture}");

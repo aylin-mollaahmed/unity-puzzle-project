@@ -598,7 +598,8 @@ public class GameManger : MonoBehaviour
     //Показване на панела за завършена игра
     private void ShowFinalPanel()
     {
-        finalText.text = "Поздравления! Завършихте нивото\n" + $"Спечелени точки: {scorePoints}";
+        finalText.text = "Well done! Level completed!\n" + $"Points earned: {scorePoints}";
+
         finalPanel.SetActive(true);
     }
 
