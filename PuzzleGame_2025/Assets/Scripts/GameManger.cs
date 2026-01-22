@@ -34,6 +34,10 @@ public class GameManger : MonoBehaviour
     [SerializeField] private TMP_Text finalText;
     [SerializeField] private Button playAgainButton;
 
+    [Header("Win Effects")]
+    [SerializeField] private ParticleSystem confettiPS;
+
+
     //DOM дърво с конфигурации за нивата и правилата за помощ
     private LevelRepository rep;
     //Клас с извлечената конфигурационна информация за нивото
@@ -535,6 +539,9 @@ public class GameManger : MonoBehaviour
             Vector3 deltaWorld = targetAnchorWorld - anchorWorld;
             draggingPiece.position += deltaWorld;
 
+            AudioManager.Instance?.PlayPlace();
+
+
             //Искаме всички парчета да са вече неактивни
             foreach (var p in groupToPieces[draggingPiece])
                 p.GetComponent<BoxCollider2D>().enabled = false;
@@ -566,6 +573,11 @@ public class GameManger : MonoBehaviour
                 UserAndGameDetailsManager.Instance.CurrentUser.totalPoints = totalPoints.ToString();
 
                 UserAndGameDetailsManager.Instance.CurrentUser.unlockedUpTo[pictureId] = unlockedUpToNew.ToString();
+
+                AudioManager.Instance?.PlayWin();
+                if (confettiPS != null)
+                    confettiPS.Play();
+
                 ShowFinalPanel();
             }
         }
