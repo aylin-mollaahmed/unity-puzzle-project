@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.U2D;
 using UnityEngine.UI;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 
 public class GameManger : MonoBehaviour
@@ -310,6 +311,8 @@ public class GameManger : MonoBehaviour
             groupToPieces[groupRoot] = new List<Transform> { piece };
         }
     }
+   
+
 
     //Функция, която разпръсва парчетата по видимата част на екрана и ги върти ако е нужно
     private void Scatter()
@@ -332,17 +335,33 @@ public class GameManger : MonoBehaviour
 
         //Смаляваме видимия диапазон по x и y,за да сме сигурни, че няма да е възможно да сложим центъра на парчето в някой от краищата и част от парчето да не се вижда
         //Ппц е достатъчно да извадим и половината размер, но за по-сигурно изваждаме целия размер
-        orthoHeight -= pieceHeight;
-        orthoWidth -= pieceWidth;
+        orthoHeight -= pieceHeight/2 + 0.1f;
+        orthoWidth -= pieceWidth/2 + 0.1f;
 
         //Минаваме през всяка група и й задаваме случайни координати в позволения диапазон
         //Ако нивото позволява й даваме и произволна ориентация
         //Към този момент всяка група съдържа само по едно парче, тоест е същото като да го приложим върху групата
-
+        float borderWidth =  width * dimensions.x * gameHolder.localScale.x;
+       
         foreach (Transform group in GetAllGroups())
         {
-            float x = Random.Range(-orthoWidth, orthoWidth);
-            float y = Random.Range(-orthoHeight, orthoHeight);
+            int leftOrRight = Random.Range(1, 3);
+            float x = 0;
+            float y = 0;
+           
+            switch (leftOrRight)
+            {
+                case 1:
+                    x = Random.Range(-orthoWidth, -borderWidth/2 - width * gameHolder.localScale.x /2 - 0.1f);
+                    y = Random.Range(-orthoHeight, orthoHeight - 1);
+                    break;
+                case 2:
+                    x = Random.Range( borderWidth / 2 + width * gameHolder.localScale.x / 2 + 0.1f, orthoWidth);
+                    y = Random.Range(-orthoHeight, orthoHeight - 1);
+                    break;
+                
+            }
+
 
             if (currentLevel.randomOrientation)
             {
@@ -359,7 +378,7 @@ public class GameManger : MonoBehaviour
         }
 
     }
-
+    
     // Функция, която чертае рамката на пъзела
     private void UpdateBorder()
     {
@@ -523,7 +542,7 @@ public class GameManger : MonoBehaviour
             //Увеличаваме брой на частите, които са на правилните места с толкова, колкото елемента съдържа групата
             //Тъй като още няма различна логика, броя точки е същия
             piecesCorrect += groupToPieces[draggingPiece].Count;
-            scorePoints += groupToPieces[draggingPiece].Count;
+            scorePoints += groupToPieces[draggingPiece].Count * currentLevel.piecePoint;
 
             //Актуализираме броя точки
             CorrectToShow.text = "Points: " + scorePoints;
