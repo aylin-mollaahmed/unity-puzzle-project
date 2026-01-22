@@ -24,8 +24,8 @@ public class LevelRepository
         config.pieceShape = node.Attributes["pieceShape"].Value;
         config.randomOrientation = bool.Parse(node.Attributes["randomOrientation"].Value);
         config.piecesCount = int.Parse(node.Attributes["shortSidePieces"].Value);
-
-        // ---- Help config ----
+        config.piecePoint = int.Parse(node.Attributes["piecePoint"].Value);
+        
         var helpNode = node.SelectSingleNode("Help") as XmlElement;
 
         var helpConfig = new HelpConfig();

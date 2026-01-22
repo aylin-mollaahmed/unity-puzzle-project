@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.U2D;
 using UnityEngine.UI;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 
 public class GameManger : MonoBehaviour
@@ -310,6 +311,8 @@ public class GameManger : MonoBehaviour
             groupToPieces[groupRoot] = new List<Transform> { piece };
         }
     }
+   
+
 
     //Функция, която разпръсва парчетата по видимата част на екрана и ги върти ако е нужно
     private void Scatter()
@@ -332,17 +335,33 @@ public class GameManger : MonoBehaviour
 
         //Смаляваме видимия диапазон по x и y,за да сме сигурни, че няма да е възможно да сложим центъра на парчето в някой от краищата и част от парчето да не се вижда
         //Ппц е достатъчно да извадим и половината размер, но за по-сигурно изваждаме целия размер
-        orthoHeight -= pieceHeight;
-        orthoWidth -= pieceWidth;
+        orthoHeight -= pieceHeight/2 + 0.1f;
+        orthoWidth -= pieceWidth/2 + 0.1f;
 
         //Минаваме през всяка група и й задаваме случайни координати в позволения диапазон
         //Ако нивото позволява й даваме и произволна ориентация
         //Към този момент всяка група съдържа само по едно парче, тоест е същото като да го приложим върху групата
-
+        float borderWidth =  width * dimensions.x * gameHolder.localScale.x;
+       
         foreach (Transform group in GetAllGroups())
         {
-            float x = Random.Range(-orthoWidth, orthoWidth);
-            float y = Random.Range(-orthoHeight, orthoHeight);
+            int leftOrRight = Random.Range(1, 3);
+            float x = 0;
+            float y = 0;
+           
+            switch (leftOrRight)
+            {
+                case 1:
+                    x = Random.Range(-orthoWidth, -borderWidth/2 - width * gameHolder.localScale.x /2 - 0.1f);
+                    y = Random.Range(-orthoHeight, orthoHeight - 1);
+                    break;
+                case 2:
+                    x = Random.Range( borderWidth / 2 + width * gameHolder.localScale.x / 2 + 0.1f, orthoWidth);
+                    y = Random.Range(-orthoHeight, orthoHeight - 1);
+                    break;
+                
+            }
+
 
             if (currentLevel.randomOrientation)
             {
@@ -359,7 +378,7 @@ public class GameManger : MonoBehaviour
         }
 
     }
-
+    
     // Функция, която чертае рамката на пъзела
     private void UpdateBorder()
     {
@@ -523,7 +542,7 @@ public class GameManger : MonoBehaviour
             //Увеличаваме брой на частите, които са на правилните места с толкова, колкото елемента съдържа групата
             //Тъй като още няма различна логика, броя точки е същия
             piecesCorrect += groupToPieces[draggingPiece].Count;
-            scorePoints += groupToPieces[draggingPiece].Count;
+            scorePoints += groupToPieces[draggingPiece].Count * currentLevel.piecePoint;
 
             //Актуализираме броя точки
             CorrectToShow.text = "Points: " + scorePoints;
@@ -540,8 +559,9 @@ public class GameManger : MonoBehaviour
 
                 int totalPoints = scorePoints + int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.totalPoints);
                 string pictureId = getPictureId(UserAndGameDetailsManager.Instance.CurrentGame.pictureId);
-                int unlockedUpToNew = UserAndGameDetailsManager.Instance.CurrentGame.difficulty + 1;
+                int unlockedUpToNew = Mathf.Max(int.Parse(UserAndGameDetailsManager.Instance.CurrentUser.unlockedUpTo[pictureId]),UserAndGameDetailsManager.Instance.CurrentGame.difficulty + 1);
                 repo.AddPoints(UserAndGameDetailsManager.Instance.CurrentUser.username, totalPoints);
+                
                 repo.updateLevelLocking(UserAndGameDetailsManager.Instance.CurrentUser.username, unlockedUpToNew, pictureId);
                 UserAndGameDetailsManager.Instance.CurrentUser.totalPoints = totalPoints.ToString();
 
@@ -660,8 +680,137 @@ public class GameManger : MonoBehaviour
                && col.enabled
                && groupToPieces[pieceToGroup[piece]].Count == 1;
     }
-
     private List<int> FindPiecesToConnect()
+    {
+        // ако е Irregular (триъгълници) -> друга логика за съседство
+        if (currentLevel != null && currentLevel.pieceShape == "Irregular")
+            return FindTrianglePiecesToConnect();
+
+        // иначе си остава старата логика за Rect
+        return FindPRectPiecesToConnect();
+    }
+    
+   
+
+
+    // ===================== 2) ДОБАВИ ТОВА: ТРИЪГЪЛНИ СЪСЕДИ (BL->TR диагонал както при теб) =====================
+    //
+    // Индексиране при теб:
+    // squareIndex = row*W + col
+    // triIndex0 = squareIndex*2 + 0  (BL, BR, TR)  -> "долно-десния" триъгълник в клетката
+    // triIndex1 = squareIndex*2 + 1  (BL, TR, TL)  -> "горно-ляв" триъгълник в клетката
+    //
+    // Реални съседи по РЪБ (не по "idx±1"):
+    // - Вътрешният диагонал (в клетката): tri0 <-> tri1 (винаги)
+    // - Вертикален ръб: tri1 (ляво-горе) има "ляв" ръб и "горен" ръб; tri0 има "десен" и "долен"
+    //   * Ляв съсед на tri1 е tri0 на клетката вляво
+    //   * Горен съсед на tri1 е tri0 на клетката отгоре
+    //   * Десен съсед на tri0 е tri1 на клетката вдясно
+    //   * Долен съсед на tri0 е tri1 на клетката отдолу
+    //
+    private List<int> FindTrianglePiecesToConnect()
+    {
+        // Важно: тук НЕ използваме idx%dimensions.x директно, защото idx е триъгълник, не клетка.
+        List<int> result = new List<int>();
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            Transform startPiece = pieces[i];
+            if (!IsUnsolved(startPiece))
+                continue;
+
+            int triIdx = int.Parse(startPiece.name);
+
+            // 1) намираме клетката и кой триъгълник е (0 или 1)
+            int squareIndex = triIdx / 2;
+            int triInSquare = triIdx % 2; // 0 или 1
+
+            int col = squareIndex % dimensions.x;
+            int row = squareIndex / dimensions.x;
+
+            // Вземи списък със съседни триъгълници по ръб
+            List<int> neighbors = GetTriangleNeighbors(triIdx, row, col, triInSquare);
+
+            // Върни първия валиден съсед (несъбран и със самостоятелна група)
+            for (int n = 0; n < neighbors.Count; n++)
+            {
+                int nb = neighbors[n];
+                if (nb < 0 || nb >= pieces.Count) continue;
+
+                // намираме самото парче по индекс (името му е индекса)
+                Transform neighborPiece = FindPieceByIndex(nb);
+                if (neighborPiece == null) continue;
+
+                if (IsUnsolved(neighborPiece))
+                {
+                    result.Add(triIdx);
+                    result.Add(nb);
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<int> GetTriangleNeighbors(int triIdx, int row, int col, int triInSquare)
+    {
+        // triInSquare:
+        // 0 = (BL, BR, TR)  => има ръбове: долен, десен, диагонал
+        // 1 = (BL, TR, TL)  => има ръбове: ляв, горен, диагонал
+        //
+        // Вътрешният диагонал съсед винаги е "другия" в същата клетка
+        int squareIndex = triIdx / 2;
+
+        int tri0 = squareIndex * 2 + 0;
+        int tri1 = squareIndex * 2 + 1;
+
+        List<int> res = new List<int>(3);
+
+        // 1) диагонален съсед (в клетката)
+        res.Add(triInSquare == 0 ? tri1 : tri0);
+
+        // 2) външни съседи по ръб
+        if (triInSquare == 0)
+        {
+            // tri0: десен ръб -> триъгълник 1 на клетката вдясно
+            if (col < dimensions.x - 1)
+            {
+                int rightSquare = squareIndex + 1;
+                res.Add(rightSquare * 2 + 1);
+            }
+
+            // tri0: долен ръб -> триъгълник 1 на клетката отдолу
+            if (row > 0)
+            {
+                int downSquare = squareIndex - dimensions.x;
+                res.Add(downSquare * 2 + 1);
+            }
+        }
+        else
+        {
+            // tri1: ляв ръб -> триъгълник 0 на клетката вляво
+            if (col > 0)
+            {
+                int leftSquare = squareIndex - 1;
+                res.Add(leftSquare * 2 + 0);
+            }
+
+            // tri1: горен ръб -> триъгълник 0 на клетката отгоре
+            if (row < dimensions.y - 1)
+            {
+                int upSquare = squareIndex + dimensions.x;
+                res.Add(upSquare * 2 + 0);
+            }
+        }
+
+        return res;
+    }
+
+
+    
+
+    private List<int> FindPRectPiecesToConnect()
     {
         // взимаме стартово парче, в случая взима подред първото парче, което не си е на мястото започвайки от долния ляв ъгъл
         List<int> resultToReturn = new List<int>();
