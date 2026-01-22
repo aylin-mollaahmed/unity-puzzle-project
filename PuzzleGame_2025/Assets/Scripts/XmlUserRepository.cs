@@ -111,20 +111,14 @@ public class XmlUserRepository
     //Функция за регистрация на потребител
     public bool TryRegister(string username, string password, ref string message)
     {
-        
-
-        if (username == null || password == null || username.Length == 0 || password.Length == 0)
-        {
-            message = "Моля, въведи потребителско име и парола.";
-            return false;
-        }
+       
 
         var doc = LoadDoc();
         //Проверявам има ли вече такъв потребител
         var existingUser = doc.SelectSingleNode($"/Users/User[@username=\"{username}\"]");
         if (existingUser != null)
         {
-            message = "Такъв потребител вече съществува.";
+            message = "A user with this username already exists.";
             return false;
         }
 
@@ -168,7 +162,7 @@ public class XmlUserRepository
         doc.DocumentElement.AppendChild(user);
         doc.Save(filePath);
 
-        message = "Успешна регистрация! Моля върнете се към към страницата за вход!";
+        message = "Registration successful! Please return to the login page.";
         return true;
     }
 
