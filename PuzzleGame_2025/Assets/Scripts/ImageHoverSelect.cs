@@ -46,6 +46,7 @@ public class ImageHoverSelect : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        AudioManager.Instance?.PlayClick();
         SelectThis();
     }
 

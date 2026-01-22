@@ -31,6 +31,8 @@ public class MoveAndShowPanel : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        AudioManager.Instance?.PlayClick();
+
         if (panel == null || panelGroup == null || canvasRect == null) return;
 
         // менюто да е под Canvas и над всичко

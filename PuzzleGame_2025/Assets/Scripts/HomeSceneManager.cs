@@ -34,6 +34,11 @@ public class HomeSceneManager : MonoBehaviour
         {
             difficultyDropdown.onValueChanged.RemoveAllListeners();
             difficultyDropdown.onValueChanged.AddListener(OnDifficultySelected);
+
+            difficultyDropdown.onValueChanged.AddListener(_ =>
+            {
+                AudioManager.Instance?.PlayClick();
+            });
         }
 
         TryLoadUserUI();
