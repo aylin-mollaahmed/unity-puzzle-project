@@ -16,8 +16,8 @@ public class HomeSceneManager : MonoBehaviour
     public TMP_Text messageText;
 
     [Header("Message Placement")]
-    public RectTransform messageRect;          // drag RectTransform-а на Text_Message
-    public float messageVisibleSeconds = 2.5f; // време за четене
+    public RectTransform messageRect;          
+    public float messageVisibleSeconds = 4f;
 
     [Header("Scenes")]
     public string gameSceneName = "GameScene";
@@ -65,7 +65,7 @@ public class HomeSceneManager : MonoBehaviour
     {
         if (UserAndGameDetailsManager.Instance == null || !UserAndGameDetailsManager.Instance.HasUser())
         {
-            ShowMessage("Няма логнат потребител. Влез от Login/Register.");
+            ShowMessage("There is no user logged in. Please log in or create an account!");
             return;
         }
 
@@ -74,14 +74,12 @@ public class HomeSceneManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(selectedPictureKey))
         {
-            ShowMessage("Невалидна картинка (липсва key).");
+            ShowMessage("Invalid picture!");
             return;
         }
 
         UserInfoClass user = UserAndGameDetailsManager.Instance.CurrentUser;
         maxUnlockedForSelectedPicture = GetMaxUnlockedDifficulty(user, selectedPictureKey);
-
-        Debug.Log($"[PIC] id={selectedPictureId} key={selectedPictureKey} maxUnlocked={maxUnlockedForSelectedPicture}");
 
         if (difficultyDropdown != null)
         {
@@ -94,9 +92,7 @@ public class HomeSceneManager : MonoBehaviour
 
     private void OnDifficultySelected(int dropdownIndex)
     {
-        Debug.Log($"[TRY] pic={selectedPictureId} index={dropdownIndex} maxUnlocked={maxUnlockedForSelectedPicture}");
 
-        // 0 = "Избери ниво..." -> не правим нищо и НЕ показваме съобщение
         if (dropdownIndex == 0)
         {
             ClearMessage();
@@ -107,23 +103,22 @@ public class HomeSceneManager : MonoBehaviour
 
         if (UserAndGameDetailsManager.Instance == null || !UserAndGameDetailsManager.Instance.HasUser())
         {
-            ShowMessage("Няма логнат потребител. Влез от Login/Register.");
+            ShowMessage("There is no user logged in. Please log in or create an account!");
             return;
         }
 
         if (selectedPictureId < 1)
         {
-            ShowMessage("Първо избери картинка.");
+            ShowMessage("First choose a picture!");
             return;
         }
 
-        // защото index 1 = Level 1, index 2 = Level 2 ...
         int chosenDifficulty = dropdownIndex;
 
         // заключено
         if (chosenDifficulty > maxUnlockedForSelectedPicture)
         {
-            ShowMessage($"Ниво {chosenDifficulty} е заключено. Отключено е до {maxUnlockedForSelectedPicture}.");
+            ShowMessage($"Level {chosenDifficulty} is locked. It is unlocked up to level {maxUnlockedForSelectedPicture}.");
             if (difficultyDropdown != null)
             {
                 difficultyDropdown.SetValueWithoutNotify(0);
@@ -133,7 +128,6 @@ public class HomeSceneManager : MonoBehaviour
             return;
         }
 
-        // отключено -> директно игра
         UserAndGameDetailsManager.Instance.SetGame(selectedPictureId, chosenDifficulty);
         SceneManager.LoadScene(gameSceneName);
     }

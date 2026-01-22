@@ -13,7 +13,6 @@ public class XmlUserRepository
     {
         //Сглобява правилен път от папката за записване да файлове, които да не се трият след рестарт и името на файла
         //C:\Users\Aylin\AppData\LocalLow\CompanyName\ProductName\users.xml
-
         filePath = Path.Combine(Application.persistentDataPath, fileName);
 
         //Подсигуряваме, че такъв файл съществува
