@@ -28,11 +28,11 @@ public class AuthManager : MonoBehaviour
     public void OnRegisterClicked()
     {
 
-        if (regUsername.text.Length == 0 || loginPassword.text.Length == 0)
+        if (regUsername.text.Length == 0 || regPassword.text.Length == 0)
         {
             SetMessage("Please enter a username and password.");
             return;
-        }
+        }   
         //Ако е имало съобщения от логин-а да се махнат
         SetMessage("");
         var msg = "";
